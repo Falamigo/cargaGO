@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logistica On-Demand - VS Code Extension</title>
+    <style>
+        :root {
+            --vscode-bg: var(--vscode-editor-background, #1e1e1e);
+            --vscode-fg: var(--vscode-editor-foreground, #d4d4d4);
+            --vscode-border: var(--vscode-panel-border, #3c3c3c);
+            --vscode-accent: var(--vscode-button-background, #0e639c);
+            --vscode-accent-hover: var(--vscode-button-hoverBackground, #1177bb);
+            --vscode-success: #4ec9b0;
+            --vscode-warning: #dcdcaa;
+            --vscode-danger: #f44747;
+            --vscode-info: #569cd6;
+            --vscode-secondary: var(--vscode-badge-background, #4d4d4d);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--vscode-font-family, 'Segoe UI', sans-serif);
+            font-size: var(--vscode-font-size, 13px);
+            background: var(--vscode-bg);
+            color: var(--vscode-fg);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header VS Code Style */
+        .vscode-header {
+            background: var(--vscode-secondary);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--vscode-border);
+        }
+        .vscode-header h1 { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .vscode-header .badge {
+            background: var(--vscode-accent);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        .vscode-header .actions { display: flex; gap: 8px; }
+        .vscode-btn {
+            background: var(--vscode-accent);
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 3px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .vscode-btn:hover { background: var(--vscode-accent-hover); }
+        .vscode-btn.secondary { background: var(--vscode-secondary); }
+        .vscode-btn.secondary:hover { background: #5a5a5a; }
+        .vscode-btn.danger { background: var(--vscode-danger); }
+        .vscode-btn.success { background: var(--vscode-success); color: #1e1e1e; }
+
+        /* Main Layout */
+        .vscode-main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .vscode-sidebar {
+            width: 260px;
+            background: var(--vscode-bg);
+            border-right: 1px solid var(--vscode-border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .sidebar-section {
+            padding: 12px;
+            border-bottom: 1px solid var(--vscode-border);
+        }
+        .sidebar-section h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--vscode-fg);
+            opacity: 0.6;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sidebar-item {
+            padding: 8px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        .sidebar-item:hover { background: rgba(255,255,255,0.05); }
+        .sidebar-item.active { background: var(--vscode-accent); color: white; }
+        .sidebar-item .icon { font-size: 16px; width: 20px; text-align: center; }
+        .sidebar-item .status-dot {
+            width: 8px; height: 8px; border-radius: 50%; margin-left: auto;
+        }
+        .status-dot.online { background: var(--vscode-success); }
+        .status-dot.busy { background: var(--vscode-warning); }
+        .status-dot.offline { background: var(--vscode-danger); }
+
+        /* Content Area */
+        .vscode-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Tabs */
+        .vscode-tabs {
+            display: flex;
+            background: var(--vscode-secondary);
+            border-bottom: 1px solid var(--vscode-border);
+            overflow-x: auto;
+        }
+        .vscode-tab {
+            padding: 8px 16px;
+            font-size: 12px;
+            cursor: pointer;
+            border-right: 1px solid var(--vscode-border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .vscode-tab:hover { background: rgba(255,255,255,0.05); }
+        .vscode-tab.active {
+            background: var(--vscode-bg);
+            border-top: 2px solid var(--vscode-accent);
+            margin-top: -2px;
+        }
+        .vscode-tab .close { opacity: 0.5; font-size: 14px; }
+        .vscode-tab .close:hover { opacity: 1; color: var(--vscode-danger); }
+
+        /* Tab Content */
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: none;
+        }
+        .tab-content.active { display: block; }
+
+        /* Cards VS Code Style */
+        .vscode-card {
+            background: var(--vscode-secondary);
+            border: 1px solid var(--vscode-border);
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .vscode-card h2 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Map Canvas */
+        .map-container {
+            width: 100%;
+            height: 300px;
+            background: #0d1117;
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--vscode-border);
+        }
+        #mapCanvas {
+            width: 100%;
+            height: 100%;
+        }
+        .map-overlay {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(30,30,30,0.9);
+            padding: 10px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--vscode-border);
+            font-size: 12px;
+        }
+        .map-overlay .eta {
+            color: var(--vscode-success);
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 24px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--vscode-border);
+        }
+        .timeline-item {
+            position: relative;
+            padding: 12px 0;
+            padding-left: 16px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 16px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--vscode-border);
+            border: 2px solid var(--vscode-bg);
+        }
+        .timeline-item.completed::before { background: var(--vscode-success); }
+        .timeline-item.active::before {
+            background: var(--vscode-accent);
+            box-shadow: 0 0 0 4px rgba(14,99,156,0.3);
+            animation: pulse 2s infinite;
+        }
+        .timeline-item h4 { font-size: 13px; margin-bottom: 4px; }
+        .timeline-item p { font-size: 12px; opacity: 0.7; }
+        .timeline-item .time { font-size: 11px; opacity: 0.5; margin-top: 4px; }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 4px rgba(14,99,156,0.3); }
+            50% { box-shadow: 0 0 0 8px rgba(14,99,156,0.1); }
+        }
+
+        /* Chat */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 400px;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            background: var(--vscode-bg);
+            border-radius: 6px;
+            border: 1px solid var(--vscode-border);
+        }
+        .chat-message {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .chat-message.sent {
+            background: var(--vscode-accent);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-message.received {
+            background: var(--vscode-secondary);
+            border: 1px solid var(--vscode-border);
+            border-bottom-left-radius: 4px;
+        }
+        .chat-message .meta {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+        .chat-input {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .chat-input input {
+            flex: 1;
+            background: var(--vscode-secondary);
+            border: 1px solid var(--vscode-border);
+            color: var(--vscode-fg);
+            padding: 10px 14px;
+            border-radius: 4px;
+            font-size: 13px;
+            outline: none;
+        }
+        .chat-input input:focus { border-color: var(--vscode-accent); }
+
+        /* Form Elements */
+        .vscode-form-group { margin-bottom: 16px; }
+        .vscode-form-group label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 6px;
+            opacity: 0.8;
+        }
+        .vscode-input, .vscode-select, .vscode-textarea {
+            width: 100%;
+            background: var(--vscode-secondary);
+            border: 1px solid var(--vscode-border);
+            color: var(--vscode-fg);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            outline: none;
+            font-family: inherit;
+        }
+        .vscode-input:focus, .vscode-select:focus, .vscode-textarea:focus {
+            border-color: var(--vscode-accent);
+        }
+        .vscode-textarea { min-height: 80px; resize: vertical; }
+
+        /* PIN Input */
+        .pin-container { display: flex; gap: 8px; justify-content: center; margin: 24px 0; }
+        .pin-input {
+            width: 44px; height: 52px;
+            background: var(--vscode-secondary);
+            border: 2px solid var(--vscode-border);
+            border-radius: 6px;
+            color: var(--vscode-fg);
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .pin-input:focus { border-color: var(--vscode-accent); }
+        .pin-input.filled { border-color: var(--vscode-success); }
+
+        /* Grid */
+        .vscode-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .vscode-grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .vscode-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-badge.success { background: rgba(78,201,176,0.2); color: var(--vscode-success); }
+        .status-badge.warning { background: rgba(220,220,170,0.2); color: var(--vscode-warning); }
+        .status-badge.danger { background: rgba(244,71,71,0.2); color: var(--vscode-danger); }
+        .status-badge.info { background: rgba(86,156,214,0.2); color: var(--vscode-info); }
+
+        /* Table */
+        .vscode-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .vscode-table th {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--vscode-border);
+            font-weight: 600;
+            opacity: 0.8;
+        }
+        .vscode-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--vscode-border);
+        }
+        .vscode-table tr:hover td { background: rgba(255,255,255,0.03); }
+
+        /* Console/Log */
+        .vscode-console {
+            background: #0d1117;
+            border: 1px solid var(--vscode-border);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .console-line { padding: 2px 0; }
+        .console-line .timestamp { color: #6b7280; margin-right: 8px; }
+        .console-line .level-info { color: var(--vscode-info); }
+        .console-line .level-success { color: var(--vscode-success); }
+        .console-line .level-warning { color: var(--vscode-warning); }
+        .console-line .level-error { color: var(--vscode-danger); }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--vscode-border);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        .progress-bar .fill {
+            height: 100%;
+            background: var(--vscode-accent);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        /* Signature Pad */
+        #signaturePad {
+            width: 100%;
+            height: 150px;
+            background: var(--vscode-bg);
+            border: 2px dashed var(--vscode-border);
+            border-radius: 6px;
+            cursor: crosshair;
+        }
+
+        /* Rating */
+        .rating-stars { display: flex; gap: 8px; }
+        .rating-star {
+            font-size: 28px;
+            cursor: pointer;
+            opacity: 0.3;
+            transition: opacity 0.2s;
+        }
+        .rating-star:hover, .rating-star.active { opacity: 1; color: var(--vscode-warning); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--vscode-border); border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .vscode-sidebar { width: 200px; }
+            .vscode-grid-4 { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .slide-in { animation: slideIn 0.3s ease-out; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="vscode-header">
+        <h1>
+            <span style="color: var(--vscode-accent);">📦</span>
+            Logistica On-Demand
+            <span class="badge">Cliente v2.0</span>
+        </h1>
+        <div class="actions">
+            <button class="vscode-btn secondary" onclick="refreshData()">🔄 Atualizar</button>
+            <button class="vscode-btn" onclick="toggleTheme()">🌓 Tema</button>
+        </div>
+    </div>
+
+    <!-- Main -->
+    <div class="vscode-main">
+        <!-- Sidebar -->
+        <div class="vscode-sidebar">
+            <div class="sidebar-section">
+                <h3>Entregas Ativas</h3>
+                <div class="sidebar-item active" onclick="switchTab('tracking')">
+                    <span class="icon">🚚</span>
+                    <div>
+                        <div>Pedido #12345</div>
+                        <div style="font-size: 11px; opacity: 0.6;">Magazine Luiza</div>
+                    </div>
+                    <div class="status-dot online"></div>
+                </div>
+                <div class="sidebar-item" onclick="switchTab('history')">
+                    <span class="icon">📋</span>
+                    <div>
+                        <div>Pedido #12344</div>
+                        <div style="font-size: 11px; opacity: 0.6;">Amazon</div>
+                    </div>
+                    <div class="status-dot offline"></div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Navegação</h3>
+                <div class="sidebar-item" onclick="switchTab('tracking')">
+                    <span class="icon">📍</span> Rastreamento
+                </div>
+                <div class="sidebar-item" onclick="switchTab('chat')">
+                    <span class="icon">💬</span> Chat
+                    <span style="margin-left: auto; background: var(--vscode-danger); color: white; padding: 1px 6px; border-radius: 10px; font-size: 10px;">2</span>
+                </div>
+                <div class="sidebar-item" onclick="switchTab('schedule')">
+                    <span class="icon">📅</span> Agendamento
+                </div>
+                <div class="sidebar-item" onclick="switchTab('proof')">
+                    <span class="icon">✅</span> Confirmar Entrega
+                </div>
+                <div class="sidebar-item" onclick="switchTab('history')">
+                    <span class="icon">📊</span> Histórico
+                </div>
+                <div class="sidebar-item" onclick="switchTab('settings')">
+                    <span class="icon">⚙️</span> Configurações
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Status do Sistema</h3>
+                <div style="font-size: 12px; padding: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <span>WebSocket</span>
+                        <span style="color: var(--vscode-success);">● Conectado</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <span>API</span>
+                        <span style="color: var(--vscode-success);">● Online</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Latência</span>
+                        <span>24ms</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="vscode-content">
+            <!-- Tabs -->
+            <div class="vscode-tabs">
+                <div class="vscode-tab active" data-tab="tracking" onclick="switchTab('tracking')">
+                    📍 Rastreamento
+                    <span class="close" onclick="event.stopPropagation(); closeTab('tracking')">×</span>
+                </div>
+                <div class="vscode-tab" data-tab="chat" onclick="switchTab('chat')">
+                    💬 Chat
+                    <span class="close" onclick="event.stopPropagation(); closeTab('chat')">×</span>
+                </div>
+                <div class="vscode-tab" data-tab="schedule" onclick="switchTab('schedule')">
+                    📅 Agendamento
+                    <span class="close" onclick="event.stopPropagation(); closeTab('schedule')">×</span>
+                </div>
+            </div>
+
+            <!-- TAB: Rastreamento -->
+            <div class="tab-content active" id="tab-tracking">
+                <div class="vscode-grid">
+                    <div class="vscode-card" style="grid-column: span 2;">
+                        <h2>📍 Mapa de Rastreamento Ao Vivo</h2>
+                        <div class="map-container">
+                            <canvas id="mapCanvas"></canvas>
+                            <div class="map-overlay">
+                                <div style="opacity: 0.7; margin-bottom: 4px;">Tempo estimado</div>
+                                <div class="eta" id="mapEta">12 min</div>
+                                <div style="opacity: 0.5; margin-top: 4px; font-size: 11px;">
+                                    Motorista: João Marcos
+                                </div>
+                            </div>
+                        </div>
+                        <div class="progress-bar" style="margin-top: 12px;">
+                            <div class="fill" id="deliveryProgress" style="width: 35%;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; opacity: 0.7;">
+                            <span>Centro de Distribuição</span>
+                            <span id="progressText">35% - A 2.3 km</span>
+                            <span>Seu endereço</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vscode-grid">
+                    <div class="vscode-card">
+                        <h2>👤 Motorista</h2>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 18px;">
+                                JM
+                            </div>
+                            <div>
+                                <div style="font-weight: 600;">João Marcos</div>
+                                <div style="font-size: 12px; opacity: 0.7;">⭐ 4.9 • 1.247 entregas</div>
+                                <div style="font-size: 11px; opacity: 0.5; margin-top: 2px;">🚗 Honda Civic - ABC-1234</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-top: 12px;">
+                            <button class="vscode-btn" style="flex: 1;" onclick="switchTab('chat')">💬 Chat</button>
+                            <button class="vscode-btn secondary" style="flex: 1;" onclick="callDriver()">📞 Ligar</button>
+                        </div>
+                    </div>
+
+                    <div class="vscode-card">
+                        <h2>📋 Detalhes do Pedido</h2>
+                        <table class="vscode-table">
+                            <tr><td>Pedido</td><td>#12345</td></tr>
+                            <tr><td>Loja</td><td>Magazine Luiza</td></tr>
+                            <tr><td>Itens</td><td>3 produtos</td></tr>
+                            <tr><td>Endereço</td><td>Rua das Flores, 123</td></tr>
+                            <tr><td>Janela</td><td><span class="status-badge info">Tarde 14h-18h</span></td></tr>
+                            <tr><td>Status</td><td><span class="status-badge success">Em rota</span></td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="vscode-card">
+                    <h2>📊 Timeline da Entrega</h2>
+                    <div class="timeline">
+                        <div class="timeline-item completed">
+                            <h4>Pedido Confirmado</h4>
+                            <p>Seu pedido foi recebido pela loja</p>
+                            <div class="time">Ontem, 18:45</div>
+                        </div>
+                        <div class="timeline-item completed">
+                            <h4>Em Separação</h4>
+                            <p>Itens sendo preparados para envio</p>
+                            <div class="time">Hoje, 08:30</div>
+                        </div>
+                        <div class="timeline-item completed">
+                            <h4>Despachado</h4>
+                            <p>Pedido saiu do centro de distribuição</p>
+                            <div class="time">Hoje, 10:15</div>
+                        </div>
+                        <div class="timeline-item active">
+                            <h4>Saiu para Entrega</h4>
+                            <p>Motorista João está a caminho</p>
+                            <div class="time">Hoje, 14:32</div>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>Entregue</h4>
+                            <p>Aguardando confirmação do cliente</p>
+                            <div class="time">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vscode-card">
+                    <h2>🖥️ Console de Eventos (Tempo Real)</h2>
+                    <div class="vscode-console" id="eventConsole">
+                        <div class="console-line">
+                            <span class="timestamp">[14:32:01]</span>
+                            <span class="level-info">[INFO]</span>
+                            WebSocket conectado: wss://api.logistica.com/ws/cliente
+                        </div>
+                        <div class="console-line">
+                            <span class="timestamp">[14:32:15]</span>
+                            <span class="level-success">[SUCCESS]</span>
+                            Entrega #12345 atribuída ao motorista João Marcos (ID: mot_001)
+                        </div>
+                        <div class="console-line">
+                            <span class="timestamp">[14:33:22]</span>
+                            <span class="level-info">[INFO]</span>
+                            Localização atualizada: lat=-23.5512, lng=-46.6341 | Distância: 2.1km
+                        </div>
+                        <div class="console-line">
+                            <span class="timestamp">[14:35:08]</span>
+                            <span class="level-warning">[WARN]</span>
+                            Tráfego intenso detectado na Av. Paulista - ETA ajustado +3min
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Chat -->
+            <div class="tab-content" id="tab-chat">
+                <div class="vscode-card">
+                    <h2>💬 Chat com Motorista (Número Mascarado)</h2>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="chat-message received">
+                                <div>Olá! Estou chegando com seu pedido. Está em casa?</div>
+                                <div class="meta">João Marcos • 14:32</div>
+                            </div>
+                        </div>
+                        <div class="chat-input">
+                            <input type="text" id="chatInput" placeholder="Digite sua mensagem..." onkeypress="if(event.key==='Enter')sendMessage()">
+                            <button class="vscode-btn" onclick="sendMessage()">➤ Enviar</button>
+                        </div>
+                    </div>
+                    <div style="margin-top: 12px; padding: 10px; background: rgba(14,99,156,0.1); border-radius: 4px; font-size: 12px;">
+                        <span style="color: var(--vscode-accent);">🔒</span> 
+                        Privacidade protegida: números de telefone mascarados via Twilio Proxy. 
+                        Esta conversa expira em 30 minutos após a entrega.
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Agendamento -->
+            <div class="tab-content" id="tab-schedule">
+                <div class="vscode-card">
+                    <h2>📅 Alterar Janela de Entrega</h2>
+                    <p style="font-size: 13px; opacity: 0.7; margin-bottom: 16px;">
+                        Selecione uma nova janela disponível. A alteração será sincronizada em tempo real com a agenda do motorista.
+                    </p>
+
+                    <div class="vscode-form-group">
+                        <label>Janela Atual</label>
+                        <div class="vscode-input" style="background: rgba(86,156,214,0.1); border-color: var(--vscode-info);">
+                            ☀️ Período da Tarde (14:00 - 18:00) • Grátis
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label style="font-size: 12px; margin-bottom: 8px; display: block; opacity: 0.8;">Opções Disponíveis</label>
+                        <div id="scheduleOptions">
+                            <div class="sidebar-item" style="margin-bottom: 6px;" onclick="selectSchedule(this, 'j1')">
+                                <span class="icon">🌅</span>
+                                <div style="flex: 1;">
+                                    <div>Período da Manhã</div>
+                                    <div style="font-size: 11px; opacity: 0.6;">08:00 - 12:00 • 3 vagas restantes</div>
+                                </div>
+                                <span class="status-badge success">Grátis</span>
+                            </div>
+                            <div class="sidebar-item" style="margin-bottom: 6px; background: rgba(14,99,156,0.2); border: 1px solid var(--vscode-accent);" onclick="selectSchedule(this, 'j2')">
+                                <span class="icon">☀️</span>
+                                <div style="flex: 1;">
+                                    <div>Período da Tarde</div>
+                                    <div style="font-size: 11px; opacity: 0.6;">14:00 - 18:00 • 5 vagas restantes</div>
+                                </div>
+                                <span class="status-badge success">Atual</span>
+                            </div>
+                            <div class="sidebar-item" style="margin-bottom: 6px;" onclick="selectSchedule(this, 'j3')">
+                                <span class="icon">🌙</span>
+                                <div style="flex: 1;">
+                                    <div>Período da Noite</div>
+                                    <div style="font-size: 11px; opacity: 0.6;">18:00 - 22:00 • 2 vagas restantes</div>
+                                </div>
+                                <span class="status-badge success">Grátis</span>
+                            </div>
+                            <div class="sidebar-item" style="margin-bottom: 6px;" onclick="selectSchedule(this, 'j4')">
+                                <span class="icon">🎯</span>
+                                <div style="flex: 1;">
+                                    <div>Hora Marcada</div>
+                                    <div style="font-size: 11px; opacity: 0.6;">Escolha o horário exato • 2 vagas</div>
+                                </div>
+                                <span class="status-badge warning">R$ 5,00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="vscode-form-group">
+                        <label>Motivo da Alteração (opcional)</label>
+                        <select class="vscode-select">
+                            <option>Não estarei em casa no horário atual</option>
+                            <option>Preferência por outro período</option>
+                            <option>Conflito de agenda</option>
+                            <option>Outro motivo</option>
+                        </select>
+                    </div>
+
+                    <button class="vscode-btn" style="width: 100%; padding: 10px;" onclick="confirmSchedule()">
+                        Confirmar Alteração
+                    </button>
+                </div>
+
+                <div class="vscode-card">
+                    <h2>📊 Algoritmo de Alocação</h2>
+                    <div class="vscode-console" style="max-height: 150px;">
+                        <div class="console-line">
+                            <span class="timestamp">[14:30:00]</span>
+                            <span class="level-info">[ALGO]</span>
+                            Iniciando busca de janelas para ponto (-23.5629, -46.6544)
+                        </div>
+                        <div class="console-line">
+                            <span class="timestamp">[14:30:01]</span>
+                            <span class="level-info">[ALGO]</span>
+                            ST_Covers: 4 janelas encontradas na zona de cobertura
+                        </div>
+                        <div class="console-line">
+                            <span class="timestamp">[14:30:02]</span>
+                            <span class="level-success">[ALGO]</span>
+                            Score j1=0.72, j2=0.85, j3=0.61, j4=0.45 | Ordenado por score DESC
+                        </div>
+                        <div class="console-line">
+                            <span class="timestamp">[14:30:02]</span>
+                            <span class="level-info">[ALGO]</span>
+                            Janela j2 selecionada (score=0.85, capacidade=5/8, dist=1.2km)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Confirmar Entrega -->
+            <div class="tab-content" id="tab-proof">
+                <div class="vscode-card">
+                    <h2>🔐 Confirmar Recebimento</h2>
+                    <div id="proofStep1">
+                        <p style="font-size: 13px; opacity: 0.7; margin-bottom: 16px;">
+                            Digite o PIN de 6 dígitos enviado para seu e-mail cadastrado.
+                        </p>
+
+                        <div class="pin-container">
+                            <input type="text" class="pin-input" maxlength="1" oninput="movePin(this, 0)" onkeydown="movePinBack(event, 0)">
+                            <input type="text" class="pin-input" maxlength="1" oninput="movePin(this, 1)" onkeydown="movePinBack(event, 1)">
+                            <input type="text" class="pin-input" maxlength="1" oninput="movePin(this, 2)" onkeydown="movePinBack(event, 2)">
+                            <input type="text" class="pin-input" maxlength="1" oninput="movePin(this, 3)" onkeydown="movePinBack(event, 3)">
+                            <input type="text" class="pin-input" maxlength="1" oninput="movePin(this, 4)" onkeydown="movePinBack(event, 4)">
+                            <input type="text" class="pin-input" maxlength="1" oninput="movePin(this, 5)" onkeydown="movePinBack(event, 5)">
+                        </div>
+
+                        <button class="vscode-btn" style="width: 100%; padding: 10px;" onclick="verifyPin()">
+                            Verificar PIN
+                        </button>
+                        <p style="text-align: center; margin-top: 12px; font-size: 12px; opacity: 0.6;">
+                            Não recebeu? <a href="#" style="color: var(--vscode-accent);">Reenviar PIN</a>
+                        </p>
+                    </div>
+
+                    <div id="proofStep2" style="display: none;">
+                        <div class="vscode-form-group">
+                            <label>📷 Foto do Recebedor (opcional)</label>
+                            <div style="padding: 20px; background: var(--vscode-secondary); border-radius: 6px; text-align: center; border: 2px dashed var(--vscode-border);">
+                                <div style="font-size: 32px; margin-bottom: 8px;">📷</div>
+                                <p style="font-size: 12px; opacity: 0.7;">Clique para capturar foto</p>
+                            </div>
+                        </div>
+
+                        <div class="vscode-form-group">
+                            <label>✍️ Assinatura Digital</label>
+                            <canvas id="signaturePad"></canvas>
+                            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                                <button class="vscode-btn secondary" style="flex: 1;" onclick="clearSignature()">Limpar</button>
+                                <button class="vscode-btn" style="flex: 1;" onclick="saveSignature()">Salvar Assinatura</button>
+                            </div>
+                        </div>
+
+                        <button class="vscode-btn success" style="width: 100%; padding: 12px; font-size: 14px;" onclick="finalizeDelivery()">
+                            ✅ CONFIRMAR ENTREGA
+                        </button>
+                    </div>
+
+                    <div id="proofStep3" style="display: none;">
+                        <div style="text-align: center; padding: 20px;">
+                            <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
+                            <h3 style="margin-bottom: 8px;">Entrega Confirmada!</h3>
+                            <p style="opacity: 0.7; font-size: 13px; margin-bottom: 16px;">
+                                Seu pedido #12345 foi entregue com sucesso.
+                            </p>
+                        </div>
+
+                        <div style="background: rgba(78,201,176,0.1); border: 1px solid var(--vscode-success); border-radius: 6px; padding: 16px; margin-bottom: 16px;">
+                            <h4 style="margin-bottom: 12px; font-size: 13px;">📄 Comprovante Digital</h4>
+                            <table class="vscode-table" style="font-size: 12px;">
+                                <tr><td>📍 Local</td><td>Rua das Flores, 123 (15m do endereço)</td></tr>
+                                <tr><td>🔐 PIN</td><td><span class="status-badge success">Verificado</span></td></tr>
+                                <tr><td>⏰ Horário</td><td>14:45 - 03/06/2026</td></tr>
+                                <tr><td>📷 Foto</td><td><span class="status-badge success">Capturada</span></td></tr>
+                                <tr><td>✍️ Assinatura</td><td>SHA-256: a1b2c3d4...e5f6</td></tr>
+                                <tr><td>📊 Status</td><td><span class="status-badge success">VALIDADA</span></td></tr>
+                            </table>
+                        </div>
+
+                        <div style="text-align: center;">
+                            <p style="font-size: 13px; margin-bottom: 12px;">Avalie o motorista:</p>
+                            <div class="rating-stars" id="ratingStars">
+                                <span class="rating-star" onclick="setRating(1)">⭐</span>
+                                <span class="rating-star" onclick="setRating(2)">⭐</span>
+                                <span class="rating-star" onclick="setRating(3)">⭐</span>
+                                <span class="rating-star" onclick="setRating(4)">⭐</span>
+                                <span class="rating-star" onclick="setRating(5)">⭐</span>
+                            </div>
+                        </div>
+
+                        <button class="vscode-btn" style="width: 100%; margin-top: 16px; padding: 10px;" onclick="switchTab('history')">
+                            Concluir
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Histórico -->
+            <div class="tab-content" id="tab-history">
+                <div class="vscode-card">
+                    <h2>📊 Histórico de Entregas</h2>
+                    <table class="vscode-table">
+                        <thead>
+                            <tr>
+                                <th>Pedido</th>
+                                <th>Loja</th>
+                                <th>Data</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#12345</td>
+                                <td>Magazine Luiza</td>
+                                <td>03/06/2026</td>
+                                <td><span class="status-badge success">Entregue</span></td>
+                                <td><button class="vscode-btn secondary" style="padding: 4px 10px; font-size: 11px;">Ver</button></td>
+                            </tr>
+                            <tr>
+                                <td>#12344</td>
+                                <td>Amazon</td>
+                                <td>01/06/2026</td>
+                                <td><span class="status-badge success">Entregue</span></td>
+                                <td><button class="vscode-btn secondary" style="padding: 4px 10px; font-size: 11px;">Ver</button></td>
+                            </tr>
+                            <tr>
+                                <td>#12343</td>
+                                <td>Americanas</td>
+                                <td>28/05/2026</td>
+                                <td><span class="status-badge warning">Reagendada</span></td>
+                                <td><button class="vscode-btn secondary" style="padding: 4px 10px; font-size: 11px;">Ver</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: Configurações -->
+            <div class="tab-content" id="tab-settings">
+                <div class="vscode-card">
+                    <h2>⚙️ Configurações</h2>
+                    <div class="vscode-form-group">
+                        <label>Notificações Push</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="checkbox" checked style="width: 16px; height: 16px;">
+                            <span>Receber notificações de entrega</span>
+                        </div>
+                    </div>
+                    <div class="vscode-form-group">
+                        <label>Compartilhamento de Localização</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="checkbox" checked style="width: 16px; height: 16px;">
+                            <span>Permitir rastreamento em tempo real</span>
+                        </div>
+                    </div>
+                    <div class="vscode-form-group">
+                        <label>Tema da Interface</label>
+                        <select class="vscode-select">
+                            <option>Automático (seguir VS Code)</option>
+                            <option>Escuro</option>
+                            <option>Claro</option>
+                        </select>
+                    </div>
+                    <div class="vscode-form-group">
+                        <label>API Endpoint</label>
+                        <input type="text" class="vscode-input" value="wss://api.logistica.com/ws">
+                    </div>
+                    <button class="vscode-btn" style="width: 100%; padding: 10px;">Salvar Configurações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== VS CODE API ==========
+        // Em uma extensão VS Code real, usaria: const vscode = acquireVsCodeApi();
+        const vscode = {
+            postMessage: (msg) => console.log('VS Code API:', msg),
+            setState: (state) => localStorage.setItem('vscode_state', JSON.stringify(state)),
+            getState: () => JSON.parse(localStorage.getItem('vscode_state') || '{}')
+        };
+
+        // ========== TABS ==========
+        function switchTab(tabId) {
+            document.querySelectorAll('.vscode-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.sidebar-item').forEach(t => t.classList.remove('active'));
+
+            const tab = document.querySelector(`.vscode-tab[data-tab="${tabId}"]`);
+            if (tab) tab.classList.add('active');
+
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            // Atualizar sidebar
+            const sidebarItems = document.querySelectorAll('.sidebar-item');
+            sidebarItems.forEach(item => {
+                if (item.getAttribute('onclick')?.includes(`'${tabId}'`)) {
+                    item.classList.add('active');
+                }
+            });
+
+            vscode.postMessage({ command: 'tabChanged', tab: tabId });
+        }
+
+        function closeTab(tabId) {
+            const tab = document.querySelector(`.vscode-tab[data-tab="${tabId}"]`);
+            if (tab) {
+                tab.style.display = 'none';
+                if (tab.classList.contains('active')) {
+                    const nextTab = document.querySelector('.vscode-tab:not([style*="display: none"])');
+                    if (nextTab) switchTab(nextTab.dataset.tab);
+                }
+            }
+        }
+
+        // ========== MAPA CANVAS ==========
+        let mapCanvas, mapCtx;
+        let driverPos = { lat: -23.5505, lng: -46.6333 };
+        const clientPos = { lat: -23.5629, lng: -46.6544 };
+        let animationId;
+
+        function initMap() {
+            mapCanvas = document.getElementById('mapCanvas');
+            mapCtx = mapCanvas.getContext('2d');
+            resizeMap();
+            window.addEventListener('resize', resizeMap);
+            animateMap();
+        }
+
+        function resizeMap() {
+            const container = mapCanvas.parentElement;
+            mapCanvas.width = container.clientWidth;
+            mapCanvas.height = container.clientHeight;
+        }
+
+        function animateMap() {
+            const w = mapCanvas.width;
+            const h = mapCanvas.height;
+
+            // Fundo escuro
+            mapCtx.fillStyle = '#0d1117';
+            mapCtx.fillRect(0, 0, w, h);
+
+            // Grid de ruas
+            mapCtx.strokeStyle = '#21262d';
+            mapCtx.lineWidth = 1;
+            for (let i = 0; i < w; i += 40) {
+                mapCtx.beginPath(); mapCtx.moveTo(i, 0); mapCtx.lineTo(i, h); mapCtx.stroke();
+            }
+            for (let i = 0; i < h; i += 40) {
+                mapCtx.beginPath(); mapCtx.moveTo(0, i); mapCtx.lineTo(w, i); mapCtx.stroke();
+            }
+
+            // Normalizar coordenadas
+            const normX = (lng) => ((lng + 46.66) / 0.03) * w;
+            const normY = (lat) => h - ((lat + 23.57) / 0.02) * h;
+
+            // Casa do cliente
+            const cx = normX(clientPos.lng);
+            const cy = normY(clientPos.lat);
+
+            mapCtx.beginPath();
+            mapCtx.arc(cx, cy, 12, 0, Math.PI * 2);
+            mapCtx.fillStyle = '#10b981';
+            mapCtx.fill();
+            mapCtx.strokeStyle = '#fff';
+            mapCtx.lineWidth = 2;
+            mapCtx.stroke();
+
+            mapCtx.fillStyle = '#fff';
+            mapCtx.font = 'bold 10px Arial';
+            mapCtx.textAlign = 'center';
+            mapCtx.fillText('CASA', cx, cy + 4);
+
+            // Motorista
+            const mx = normX(driverPos.lng);
+            const my = normY(driverPos.lat);
+
+            mapCtx.beginPath();
+            mapCtx.arc(mx, my, 12, 0, Math.PI * 2);
+            mapCtx.fillStyle = '#0e639c';
+            mapCtx.fill();
+            mapCtx.strokeStyle = '#fff';
+            mapCtx.stroke();
+
+            mapCtx.fillStyle = '#fff';
+            mapCtx.font = 'bold 9px Arial';
+            mapCtx.fillText('MOT', mx, my + 3);
+
+            // Rota
+            mapCtx.beginPath();
+            mapCtx.setLineDash([8, 4]);
+            mapCtx.moveTo(mx, my);
+            mapCtx.lineTo(cx, cy);
+            mapCtx.strokeStyle = '#0e639c';
+            mapCtx.lineWidth = 2;
+            mapCtx.stroke();
+            mapCtx.setLineDash([]);
+
+            animationId = requestAnimationFrame(animateMap);
+        }
+
+        // Simular movimento
+        let step = 0;
+        function simulateDriver() {
+            const interval = setInterval(() => {
+                step++;
+                const ratio = step / 50;
+                driverPos.lat = -23.5505 + (clientPos.lat + 23.5505) * ratio;
+                driverPos.lng = -46.6333 + (clientPos.lng + 46.6333) * ratio;
+
+                const dist = Math.sqrt(
+                    Math.pow(driverPos.lat - clientPos.lat, 2) + 
+                    Math.pow(driverPos.lng - clientPos.lng, 2)
+                ) * 111000; // aproximacao em metros
+
+                const eta = Math.max(1, Math.ceil(dist / 100));
+                const progress = Math.min(100, Math.round(ratio * 100));
+
+                document.getElementById('mapEta').textContent = eta + ' min';
+                document.getElementById('deliveryProgress').style.width = progress + '%';
+                document.getElementById('progressText').textContent = progress + '% - A ' + Math.round(dist) + 'm';
+
+                // Log no console
+                if (step % 5 === 0) {
+                    addConsoleLine('INFO', `Localização atualizada: lat=${driverPos.lat.toFixed(4)}, lng=${driverPos.lng.toFixed(4)} | Distância: ${Math.round(dist)}m`);
+                }
+
+                if (step >= 50) {
+                    clearInterval(interval);
+                    document.getElementById('mapEta').textContent = 'CHEGOU!';
+                    document.getElementById('mapEta').style.color = 'var(--vscode-warning)';
+                    addConsoleLine('SUCCESS', 'Motorista chegou ao destino! Aguardando confirmação do cliente.');
+                }
+            }, 2000);
+        }
+
+        // ========== CONSOLE ==========
+        function addConsoleLine(level, message) {
+            const console = document.getElementById('eventConsole');
+            const time = new Date().toLocaleTimeString('pt-BR', { hour12: false });
+            const line = document.createElement('div');
+            line.className = 'console-line';
+            line.innerHTML = `
+                <span class="timestamp">[${time}]</span>
+                <span class="level-${level.toLowerCase()}">[${level}]</span>
+                ${message}
+            `;
+            console.appendChild(line);
+            console.scrollTop = console.scrollHeight;
+        }
+
+        // ========== CHAT ==========
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const messages = document.getElementById('chatMessages');
+            const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            messages.innerHTML += `
+                <div class="chat-message sent slide-in">
+                    <div>${text}</div>
+                    <div class="meta">Você • ${time} ✓✓</div>
+                </div>
+            `;
+            input.value = '';
+            messages.scrollTop = messages.scrollHeight;
+
+            // Simular resposta
+            setTimeout(() => {
+                messages.innerHTML += `
+                    <div class="chat-message received slide-in">
+                        <div>Recebido! Estou chegando.</div>
+                        <div class="meta">João Marcos • ${time}</div>
+                    </div>
+                `;
+                messages.scrollTop = messages.scrollHeight;
+            }, 2000);
+        }
+
+        // ========== PIN ==========
+        function movePin(input, index) {
+            const inputs = document.querySelectorAll('.pin-input');
+            if (input.value && index < 5) {
+                inputs[index + 1].focus();
+            }
+            input.classList.toggle('filled', input.value.length > 0);
+        }
+
+        function movePinBack(e, index) {
+            if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                document.querySelectorAll('.pin-input')[index - 1].focus();
+            }
+        }
+
+        function verifyPin() {
+            const pins = Array.from(document.querySelectorAll('.pin-input')).map(i => i.value).join('');
+            if (pins.length === 6) {
+                document.getElementById('proofStep1').style.display = 'none';
+                document.getElementById('proofStep2').style.display = 'block';
+                initSignaturePad();
+                addConsoleLine('SUCCESS', 'PIN verificado com sucesso. Procedendo para coleta de provas.');
+            } else {
+                addConsoleLine('ERROR', 'PIN incompleto. Digite todos os 6 dígitos.');
+            }
+        }
+
+        // ========== ASSINATURA ==========
+        let sigCanvas, sigCtx, isDrawing = false;
+
+        function initSignaturePad() {
+            sigCanvas = document.getElementById('signaturePad');
+            sigCanvas.width = sigCanvas.offsetWidth;
+            sigCanvas.height = sigCanvas.offsetHeight;
+            sigCtx = sigCanvas.getContext('2d');
+            sigCtx.strokeStyle = '#d4d4d4';
+            sigCtx.lineWidth = 2;
+            sigCtx.lineCap = 'round';
+
+            sigCanvas.addEventListener('mousedown', startDraw);
+            sigCanvas.addEventListener('mousemove', draw);
+            sigCanvas.addEventListener('mouseup', stopDraw);
+        }
+
+        function startDraw(e) {
+            isDrawing = true;
+            const rect = sigCanvas.getBoundingClientRect();
+            sigCtx.beginPath();
+            sigCtx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = sigCanvas.getBoundingClientRect();
+            sigCtx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            sigCtx.stroke();
+        }
+
+        function stopDraw() { isDrawing = false; }
+        function clearSignature() { sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height); }
+
+        function saveSignature() {
+            addConsoleLine('SUCCESS', 'Assinatura digital salva. Hash SHA-256 gerado: a1b2c3d4...e5f6');
+        }
+
+        // ========== FINALIZAR ==========
+        function finalizeDelivery() {
+            document.getElementById('proofStep2').style.display = 'none';
+            document.getElementById('proofStep3').style.display = 'block';
+            addConsoleLine('SUCCESS', 'Entrega #12345 finalizada com sucesso. Comprovante gerado.');
+            vscode.postMessage({ command: 'deliveryCompleted', deliveryId: '12345' });
+        }
+
+        // ========== RATING ==========
+        function setRating(n) {
+            document.querySelectorAll('#ratingStars .rating-star').forEach((s, i) => {
+                s.classList.toggle('active', i < n);
+            });
+            vscode.postMessage({ command: 'rateDriver', rating: n });
+        }
+
+        // ========== AGENDAMENTO ==========
+        let selectedSchedule = 'j2';
+
+        function selectSchedule(el, id) {
+            selectedSchedule = id;
+            document.querySelectorAll('#scheduleOptions .sidebar-item').forEach(item => {
+                item.style.background = '';
+                item.style.border = '';
+            });
+            el.style.background = 'rgba(14,99,156,0.2)';
+            el.style.border = '1px solid var(--vscode-accent)';
+        }
+
+        function confirmSchedule() {
+            addConsoleLine('SUCCESS', `Janela de entrega alterada para ID: ${selectedSchedule}`);
+            vscode.postMessage({ command: 'scheduleChanged', scheduleId: selectedSchedule });
+        }
+
+        // ========== UTILS ==========
+        function refreshData() {
+            addConsoleLine('INFO', 'Sincronizando dados com servidor...');
+            setTimeout(() => addConsoleLine('SUCCESS', 'Dados sincronizados. 3 entregas atualizadas.'), 1000);
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+            addConsoleLine('INFO', 'Tema alternado.');
+        }
+
+        function callDriver() {
+            addConsoleLine('INFO', `Iniciando chamada mascarada para: ${document.querySelector('.map-overlay').textContent}`);
+        }
+
+        // ========== INIT ==========
+        window.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            simulateDriver();
+
+            // Mensagem para VS Code
+            vscode.postMessage({ 
+                command: 'webviewReady', 
+                data: { 
+                    version: '2.0', 
+                    theme: 'dark',
+                    deliveryId: '12345'
+                } 
+            });
+        });
+    </script>
+</body>
+</html>

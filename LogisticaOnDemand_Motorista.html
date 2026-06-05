@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Logistica On-Demand - Motorista</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #1557b0;
+            --success: #34a853;
+            --danger: #ea4335;
+            --warning: #fbbc04;
+            --dark: #202124;
+            --gray: #5f6368;
+            --light-gray: #f1f3f4;
+            --white: #ffffff;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--dark);
+            color: var(--white);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* SPLASH SCREEN */
+        #splash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--dark);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 9999; transition: opacity 0.5s;
+        }
+        #splash .logo-box {
+            width: 100px; height: 100px;
+            background: var(--primary);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 20px;
+            animation: pulse 1.5s infinite;
+        }
+        #splash .logo-box svg { width: 60px; height: 60px; fill: white; }
+        #splash h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        #splash p { color: var(--gray); font-size: 14px; }
+        #splash .btn-entrar {
+            margin-top: 30px; padding: 14px 40px;
+            background: var(--primary); color: white;
+            border: none; border-radius: 25px;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* LOGIN */
+        #login-screen {
+            display: none;
+            min-height: 100vh; padding: 40px 20px;
+            flex-direction: column; justify-content: center;
+        }
+        #login-screen .logo-box {
+            width: 80px; height: 80px;
+            background: var(--primary);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 30px;
+        }
+        #login-screen .logo-box svg { width: 48px; height: 48px; fill: white; }
+        #login-screen h2 { text-align: center; font-size: 22px; margin-bottom: 8px; }
+        #login-screen .subtitle { text-align: center; color: var(--gray); font-size: 14px; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 13px; color: var(--gray); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input {
+            width: 100%; padding: 14px 16px;
+            background: #303134; color: white;
+            border: 1px solid #5f6368; border-radius: 12px;
+            font-size: 16px; outline: none;
+        }
+        .form-group input:focus { border-color: var(--primary); }
+        .btn-primary {
+            width: 100%; padding: 16px;
+            background: var(--primary); color: white;
+            border: none; border-radius: 12px;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn-primary:active { background: var(--primary-dark); }
+        .link-text {
+            text-align: center; margin-top: 20px;
+            color: var(--primary); font-size: 14px; cursor: pointer;
+        }
+
+        /* APP */
+        #app { display: none; min-height: 100vh; }
+
+        /* HEADER */
+        .app-header {
+            background: var(--dark);
+            padding: 12px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid #3c4043;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .app-header .user-info { display: flex; align-items: center; gap: 10px; }
+        .avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 16px;
+        }
+        .user-name { font-size: 14px; font-weight: 600; }
+        .user-status {
+            font-size: 12px; color: var(--success);
+            display: flex; align-items: center; gap: 4px;
+        }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+        .status-dot.offline { background: var(--gray); }
+        .status-dot.ocupado { background: var(--warning); }
+        .btn-icon {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: #303134; border: none; color: white;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+
+        /* TABS */
+        .tab-bar {
+            display: flex; background: var(--dark);
+            border-bottom: 1px solid #3c4043;
+            overflow-x: auto; scrollbar-width: none;
+        }
+        .tab-bar::-webkit-scrollbar { display: none; }
+        .tab-btn {
+            flex: 1; min-width: 80px; padding: 12px 8px;
+            background: none; border: none; color: var(--gray);
+            font-size: 12px; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-btn svg { width: 22px; height: 22px; }
+
+        /* CONTENT */
+        .tab-content { display: none; padding: 16px; padding-bottom: 80px; }
+        .tab-content.active { display: block; }
+
+        /* CARDS */
+        .card {
+            background: #303134; border-radius: 16px;
+            padding: 16px; margin-bottom: 12px;
+            border: 1px solid #3c4043;
+        }
+        .card-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .card-title { font-size: 16px; font-weight: 600; }
+        .badge {
+            padding: 4px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+        }
+        .badge-pendente { background: var(--warning); color: #000; }
+        .badge-aceita { background: var(--primary); color: white; }
+        .badge-entregue { background: var(--success); color: white; }
+        .badge-transito { background: #8ab4f8; color: #000; }
+
+        .info-row {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 8px; font-size: 14px; color: #bdc1c6;
+        }
+        .info-row svg { width: 18px; height: 18px; fill: var(--gray); flex-shrink: 0; }
+        .info-row strong { color: white; }
+
+        .valor-box {
+            background: var(--primary); border-radius: 12px;
+            padding: 12px 16px; margin-top: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .valor-box .label { font-size: 12px; opacity: 0.9; }
+        .valor-box .valor { font-size: 20px; font-weight: 700; }
+
+        .btn-action {
+            width: 100%; padding: 14px;
+            border: none; border-radius: 12px;
+            font-size: 15px; font-weight: 600; cursor: pointer;
+            margin-top: 12px; display: flex; align-items: center;
+            justify-content: center; gap: 8px;
+        }
+        .btn-aceitar { background: var(--success); color: white; }
+        .btn-recusar { background: #3c4043; color: white; }
+        .btn-iniciar { background: var(--primary); color: white; }
+        .btn-finalizar { background: var(--success); color: white; }
+        .btn-emergencia {
+            background: var(--danger); color: white;
+            position: fixed; bottom: 70px; right: 16px;
+            width: 56px; height: 56px; border-radius: 50%;
+            border: none; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(234,67,53,0.4);
+            z-index: 90; cursor: pointer;
+        }
+
+        /* OFERTAS VAZIAS */
+        .empty-state {
+            text-align: center; padding: 60px 20px;
+            color: var(--gray);
+        }
+        .empty-state svg { width: 80px; height: 80px; fill: var(--gray); margin-bottom: 16px; opacity: 0.5; }
+        .empty-state h3 { font-size: 18px; color: white; margin-bottom: 8px; }
+
+        /* PERFIL */
+        .perfil-header {
+            text-align: center; padding: 20px;
+        }
+        .perfil-header .avatar-large {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 12px; font-size: 32px; font-weight: 700;
+        }
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 12px; margin-bottom: 20px;
+        }
+        .stat-box {
+            background: #303134; border-radius: 12px;
+            padding: 16px 8px; text-align: center;
+        }
+        .stat-box .number { font-size: 22px; font-weight: 700; color: var(--primary); }
+        .stat-box .label { font-size: 11px; color: var(--gray); margin-top: 4px; }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 16px; background: #303134;
+            border-radius: 12px; margin-bottom: 8px;
+            cursor: pointer;
+        }
+        .menu-item svg { width: 24px; height: 24px; fill: var(--gray); }
+        .menu-item-text { flex: 1; }
+        .menu-item-title { font-size: 15px; }
+        .menu-item-desc { font-size: 12px; color: var(--gray); margin-top: 2px; }
+
+        /* TOGGLE */
+        .toggle-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px; background: #303134; border-radius: 12px; margin-bottom: 8px;
+        }
+        .toggle-switch {
+            width: 50px; height: 28px; border-radius: 14px;
+            background: var(--gray); position: relative; cursor: pointer;
+            transition: background 0.3s;
+        }
+        .toggle-switch.on { background: var(--success); }
+        .toggle-switch::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: white; transition: left 0.3s;
+        }
+        .toggle-switch.on::after { left: 24px; }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+            z-index: 1000; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: #303134; border-radius: 20px;
+            width: 100%; max-width: 400px; max-height: 80vh;
+            overflow-y: auto; padding: 24px;
+        }
+        .modal-title { font-size: 20px; font-weight: 600; margin-bottom: 16px; }
+        .modal-close {
+            position: absolute; top: 16px; right: 16px;
+            width: 36px; height: 36px; border-radius: 50%;
+            background: #3c4043; border: none; color: white;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+
+        /* HISTORICO */
+        .timeline-item {
+            display: flex; gap: 12px; margin-bottom: 16px;
+        }
+        .timeline-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+            background: var(--primary); margin-top: 4px; flex-shrink: 0;
+        }
+        .timeline-content { flex: 1; }
+        .timeline-date { font-size: 12px; color: var(--gray); margin-bottom: 4px; }
+        .timeline-title { font-size: 15px; font-weight: 600; }
+        .timeline-valor { font-size: 14px; color: var(--success); margin-top: 4px; }
+
+        /* RESPONSIVE */
+        @media (min-width: 768px) {
+            body { background: #121212; }
+            #app, #login-screen { max-width: 480px; margin: 0 auto; background: var(--dark); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+    <div class="logo-box">
+        <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+    </div>
+    <h1>Logistica On-Demand</h1>
+    <p>Entregas inteligentes, em tempo real</p>
+    <button class="btn-entrar" onclick="entrarApp()">ENTRAR</button>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+    <div class="logo-box">
+        <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+    </div>
+    <h2>Bem-vindo de volta!</h2>
+    <p class="subtitle">Entre para encontrar entregas proximas</p>
+
+    <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="seu@email.com" value="motorista@demo.com">
+    </div>
+    <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="login-senha" placeholder="Sua senha" value="123456">
+    </div>
+    <button class="btn-primary" onclick="fazerLogin()">ENTRAR</button>
+    <p class="link-text" onclick="mostrarCadastro()">Criar nova conta</p>
+</div>
+
+<!-- APP -->
+<div id="app">
+    <!-- HEADER -->
+    <div class="app-header">
+        <div class="user-info">
+            <div class="avatar" id="header-avatar">JD</div>
+            <div>
+                <div class="user-name" id="header-nome">Joao Driver</div>
+                <div class="user-status" id="header-status">
+                    <span class="status-dot" id="status-dot"></span>
+                    <span id="status-text">Disponivel</span>
+                </div>
+            </div>
+        </div>
+        <button class="btn-icon" onclick="toggleStatus()" title="Alterar status">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        </button>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="mudarAba('ofertas')">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+            Ofertas
+        </button>
+        <button class="tab-btn" onclick="mudarAba('ativas')">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+            Ativas
+        </button>
+        <button class="tab-btn" onclick="mudarAba('historico')">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+            Historico
+        </button>
+        <button class="tab-btn" onclick="mudarAba('perfil')">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            Perfil
+        </button>
+    </div>
+
+    <!-- CONTEUDO: OFERTAS -->
+    <div id="tab-ofertas" class="tab-content active">
+        <div id="lista-ofertas"></div>
+    </div>
+
+    <!-- CONTEUDO: ATIVAS -->
+    <div id="tab-ativas" class="tab-content">
+        <div id="lista-ativas"></div>
+    </div>
+
+    <!-- CONTEUDO: HISTORICO -->
+    <div id="tab-historico" class="tab-content">
+        <div id="lista-historico"></div>
+    </div>
+
+    <!-- CONTEUDO: PERFIL -->
+    <div id="tab-perfil" class="tab-content">
+        <div class="perfil-header">
+            <div class="avatar-large" id="perfil-avatar">JD</div>
+            <h3 id="perfil-nome">Joao Driver</h3>
+            <p style="color: var(--gray); font-size: 14px;" id="perfil-veiculo">Moto - ABC-1234</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="number" id="stat-entregas">47</div>
+                <div class="label">Entregas</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="stat-avaliacao">4.8</div>
+                <div class="label">Avaliacao</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="stat-ganhos">R$1.2k</div>
+                <div class="label">Ganhos</div>
+            </div>
+        </div>
+
+        <div class="toggle-row">
+            <div>
+                <div style="font-weight: 600;">Online</div>
+                <div style="font-size: 12px; color: var(--gray);">Receber ofertas de entrega</div>
+            </div>
+            <div class="toggle-switch on" id="toggle-online" onclick="toggleOnline()"></div>
+        </div>
+
+        <div class="menu-item" onclick="mostrarModal('veiculo')">
+            <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+            <div class="menu-item-text">
+                <div class="menu-item-title">Meu Veiculo</div>
+                <div class="menu-item-desc">Moto Honda CG 160 - ABC-1234</div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--gray)"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+        </div>
+
+        <div class="menu-item" onclick="mostrarModal('config')">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L3.16 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            <div class="menu-item-text">
+                <div class="menu-item-title">Configuracoes</div>
+                <div class="menu-item-desc">Notificacoes, privacidade, conta</div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--gray)"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+        </div>
+
+        <div class="menu-item" onclick="mostrarModal('ajuda')">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+            <div class="menu-item-text">
+                <div class="menu-item-title">Ajuda e Suporte</div>
+                <div class="menu-item-desc">FAQ, contato, reportar problema</div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--gray)"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+        </div>
+
+        <button class="btn-action btn-recusar" onclick="sairConta()" style="margin-top: 20px;">
+            Sair da Conta
+        </button>
+    </div>
+
+    <!-- BOTAO EMERGENCIA -->
+    <button class="btn-emergencia" onclick="emergencia()" title="Emergencia">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm1 16h-2v-2h2v2zm0-4h-2V7h2v7z"/></svg>
+    </button>
+</div>
+
+<!-- MODAL GENERICO -->
+<div class="modal-overlay" id="modal-overlay" onclick="fecharModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <h3 class="modal-title" id="modal-title">Titulo</h3>
+        <div id="modal-content"></div>
+        <button class="btn-primary" onclick="fecharModal()" style="margin-top: 16px;">Fechar</button>
+    </div>
+</div>
+
+<script>
+// ===================== DADOS MOCK =====================
+const motorista = {
+    nome: "Joao Driver",
+    email: "motorista@demo.com",
+    avatar: "JD",
+    veiculo: "Moto Honda CG 160",
+    placa: "ABC-1234",
+    status: "disponivel",
+    online: true,
+    entregas: 47,
+    avaliacao: 4.8,
+    ganhos: 1250.00,
+    rating: 5.0
+};
+
+let ofertas = [
+    {
+        id: 1,
+        codigo: "LOG20250604001",
+        origem: "Rua das Flores, 123 - Centro",
+        destino: "Av. Brasil, 456 - Jardim America",
+        bairro: "Jardim America",
+        cidade: "Sao Paulo",
+        distancia: 8.5,
+        tempo: 25,
+        peso: 2.5,
+        valor: 28.50,
+        tipo: "imediata",
+        fragil: false,
+        destinatario: "Maria Silva",
+        telefone: "(11) 98765-4321"
+    },
+    {
+        id: 2,
+        codigo: "LOG20250604002",
+        origem: "Rua Augusta, 789 - Consolacao",
+        destino: "Rua Oscar Freire, 100 - Jardins",
+        bairro: "Jardins",
+        cidade: "Sao Paulo",
+        distancia: 12.3,
+        tempo: 35,
+        peso: 5.0,
+        valor: 42.00,
+        tipo: "imediata",
+        fragil: true,
+        destinatario: "Pedro Costa",
+        telefone: "(11) 91234-5678"
+    },
+    {
+        id: 3,
+        codigo: "LOG20250604003",
+        origem: "Av. Paulista, 1500 - Bela Vista",
+        destino: "Rua Vergueiro, 3000 - Liberdade",
+        bairro: "Liberdade",
+        cidade: "Sao Paulo",
+        distancia: 5.2,
+        tempo: 18,
+        peso: 1.2,
+        valor: 18.00,
+        tipo: "agendada",
+        data: "2025-06-05",
+        hora_inicio: "14:00",
+        hora_fim: "16:00",
+        fragil: false,
+        destinatario: "Ana Paula",
+        telefone: "(11) 99876-5432"
+    }
+];
+
+let entregasAtivas = [];
+let historico = [
+    {
+        id: 101,
+        codigo: "LOG20250603045",
+        destino: "Rua A, 100 - Bairro X",
+        data: "03/06/2025 14:30",
+        status: "entregue",
+        valor: 32.00,
+        avaliacao: 5
+    },
+    {
+        id: 102,
+        codigo: "LOG20250603012",
+        destino: "Av. B, 200 - Bairro Y",
+        data: "03/06/2025 10:15",
+        status: "entregue",
+        valor: 45.50,
+        avaliacao: 5
+    },
+    {
+        id: 103,
+        codigo: "LOG20250602089",
+        destino: "Rua C, 50 - Bairro Z",
+        data: "02/06/2025 16:45",
+        status: "cancelada",
+        valor: 0,
+        avaliacao: 0
+    }
+];
+
+// ===================== NAVEGACAO =====================
+function entrarApp() {
+    document.getElementById('splash').style.opacity = '0';
+    setTimeout(() => {
+        document.getElementById('splash').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+    }, 500);
+}
+
+function fazerLogin() {
+    const email = document.getElementById('login-email').value;
+    const senha = document.getElementById('login-senha').value;
+
+    if (!email || !senha) {
+        alert('Preencha email e senha!');
+        return;
+    }
+
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
+    atualizarHeader();
+    renderizarOfertas();
+    renderizarAtivas();
+    renderizarHistorico();
+
+    // Simula recebimento de ofertas
+    setInterval(() => {
+        if (motorista.online && motorista.status === 'disponivel') {
+            // Aqui viria polling do backend
+        }
+    }, 30000);
+}
+
+function mostrarCadastro() {
+    alert('Funcao de cadastro sera implementada com integracao ao backend FastAPI.');
+}
+
+function sairConta() {
+    if (confirm('Deseja realmente sair?')) {
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+    }
+}
+
+// ===================== TABS =====================
+function mudarAba(aba) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+    event.currentTarget.classList.add('active');
+    document.getElementById('tab-' + aba).classList.add('active');
+
+    if (aba === 'ofertas') renderizarOfertas();
+    if (aba === 'ativas') renderizarAtivas();
+    if (aba === 'historico') renderizarHistorico();
+}
+
+// ===================== OFERTAS =====================
+function renderizarOfertas() {
+    const container = document.getElementById('lista-ofertas');
+
+    if (ofertas.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+                <h3>Nenhuma oferta no momento</h3>
+                <p>Fique online para receber novas entregas proximas a voce.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = ofertas.map(o => `
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">${o.codigo}</div>
+                    <div style="font-size: 12px; color: var(--gray); margin-top: 2px;">${o.tipo === 'agendada' ? 'Agendada para ' + o.data : 'Imediata'}</div>
+                </div>
+                <span class="badge badge-pendente">Nova</span>
+            </div>
+
+            <div class="info-row">
+                <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span><strong>De:</strong> ${o.origem}</span>
+            </div>
+            <div class="info-row">
+                <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span><strong>Para:</strong> ${o.destino}, ${o.bairro}</span>
+            </div>
+            <div class="info-row">
+                <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+                <span><strong>Peso:</strong> ${o.peso} kg ${o.fragil ? '(Fragil)' : ''}</span>
+            </div>
+            <div class="info-row">
+                <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                <span><strong>Tempo:</strong> ${o.tempo} min | <strong>Distancia:</strong> ${o.distancia} km</span>
+            </div>
+
+            <div class="valor-box">
+                <div>
+                    <div class="label">Voce recebe</div>
+                    <div class="valor">R$ ${o.valor.toFixed(2)}</div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="label">Distancia</div>
+                    <div class="valor" style="font-size: 16px;">${o.distancia} km</div>
+                </div>
+            </div>
+
+            <button class="btn-action btn-aceitar" onclick="aceitarOferta(${o.id})">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                ACEITAR ENTREGA
+            </button>
+            <button class="btn-action btn-recusar" onclick="recusarOferta(${o.id})">
+                Recusar
+            </button>
+        </div>
+    `).join('');
+}
+
+function aceitarOferta(id) {
+    const oferta = ofertas.find(o => o.id === id);
+    if (!oferta) return;
+
+    oferta.status = 'aceita';
+    oferta.data_aceite = new Date().toISOString();
+    entregasAtivas.push(oferta);
+    ofertas = ofertas.filter(o => o.id !== id);
+
+    motorista.status = 'ocupado';
+    atualizarHeader();
+    renderizarOfertas();
+    renderizarAtivas();
+
+    alert(`Entrega ${oferta.codigo} aceita! Va ate o local de coleta.`);
+
+    // Muda para aba ativas
+    document.querySelectorAll('.tab-btn')[1].click();
+}
+
+function recusarOferta(id) {
+    ofertas = ofertas.filter(o => o.id !== id);
+    renderizarOfertas();
+}
+
+// ===================== ATIVAS =====================
+function renderizarAtivas() {
+    const container = document.getElementById('lista-ativas');
+
+    if (entregasAtivas.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+                <h3>Nenhuma entrega ativa</h3>
+                <p>Aceite uma oferta para comecar.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = entregasAtivas.map(e => {
+        let statusLabel = 'Aceita';
+        let badgeClass = 'badge-aceita';
+        let btnText = 'INICIAR COLETA';
+        let btnClass = 'btn-iniciar';
+        let nextStatus = 'em_coleta';
+
+        if (e.status === 'em_coleta') {
+            statusLabel = 'Em Coleta';
+            badgeClass = 'badge-transito';
+            btnText = 'COLETA REALIZADA';
+            btnClass = 'btn-iniciar';
+            nextStatus = 'em_transito';
+        } else if (e.status === 'em_transito') {
+            statusLabel = 'Em Transito';
+            badgeClass = 'badge-transito';
+            btnText = 'CONFIRMAR ENTREGA';
+            btnClass = 'btn-finalizar';
+            nextStatus = 'entregue';
+        }
+
+        return `
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">${e.codigo}</div>
+                    <div style="font-size: 12px; color: var(--gray); margin-top: 2px;">${e.destinatario}</div>
+                </div>
+                <span class="badge ${badgeClass}">${statusLabel}</span>
+            </div>
+
+            <div class="info-row">
+                <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span><strong>Coleta:</strong> ${e.origem}</span>
+            </div>
+            <div class="info-row">
+                <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span><strong>Entrega:</strong> ${e.destino}</span>
+            </div>
+            <div class="info-row">
+                <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                <span><strong>Tel:</strong> ${e.telefone}</span>
+            </div>
+
+            <div class="valor-box">
+                <div>
+                    <div class="label">Valor a receber</div>
+                    <div class="valor">R$ ${e.valor.toFixed(2)}</div>
+                </div>
+            </div>
+
+            <button class="btn-action ${btnClass}" onclick="atualizarStatusEntrega(${e.id}, '${nextStatus}')">
+                ${btnText}
+            </button>
+
+            ${e.status !== 'entregue' ? `
+            <button class="btn-action btn-recusar" onclick="abrirMaps(${e.id})">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                Abrir no Maps
+            </button>` : ''}
+        </div>
+        `;
+    }).join('');
+}
+
+function atualizarStatusEntrega(id, novoStatus) {
+    const entrega = entregasAtivas.find(e => e.id === id);
+    if (!entrega) return;
+
+    entrega.status = novoStatus;
+
+    if (novoStatus === 'entregue') {
+        entrega.data_entrega = new Date().toISOString();
+        motorista.entregas += 1;
+        motorista.ganhos += entrega.valor;
+        motorista.status = 'disponivel';
+
+        historico.unshift({
+            id: entrega.id,
+            codigo: entrega.codigo,
+            destino: entrega.destino,
+            data: new Date().toLocaleString('pt-BR'),
+            status: 'entregue',
+            valor: entrega.valor,
+            avaliacao: 5
+        });
+
+        entregasAtivas = entregasAtivas.filter(e => e.id !== id);
+
+        atualizarHeader();
+        atualizarPerfil();
+        renderizarAtivas();
+        renderizarHistorico();
+
+        alert('Entrega finalizada com sucesso! R$ ' + entrega.valor.toFixed(2) + ' creditado.');
+        return;
+    }
+
+    renderizarAtivas();
+
+    const msgs = {
+        'em_coleta': 'Indo para coleta...',
+        'em_transito': 'Em transito para entrega!'
+    };
+    alert(msgs[novoStatus] || 'Status atualizado!');
+}
+
+function abrirMaps(id) {
+    const entrega = entregasAtivas.find(e => e.id === id);
+    if (!entrega) return;
+
+    let endereco = entrega.status === 'aceita' ? entrega.origem : entrega.destino;
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
+    window.open(url, '_blank');
+}
+
+// ===================== HISTORICO =====================
+function renderizarHistorico() {
+    const container = document.getElementById('lista-historico');
+
+    if (historico.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+                <h3>Sem historico ainda</h3>
+                <p>Suas entregas completadas aparecerao aqui.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = historico.map(h => `
+        <div class="card">
+            <div class="timeline-item">
+                <div class="timeline-dot" style="background: ${h.status === 'entregue' ? 'var(--success)' : 'var(--danger)'}"></div>
+                <div class="timeline-content">
+                    <div class="timeline-date">${h.data}</div>
+                    <div class="timeline-title">${h.codigo}</div>
+                    <div style="font-size: 13px; color: var(--gray); margin-top: 2px;">${h.destino}</div>
+                    ${h.status === 'entregue' ? `<div class="timeline-valor">+ R$ ${h.valor.toFixed(2)}</div>` : '<div style="color: var(--danger); font-size: 13px; margin-top: 4px;">Cancelada</div>'}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ===================== PERFIL =====================
+function atualizarHeader() {
+    document.getElementById('header-nome').textContent = motorista.nome;
+    document.getElementById('header-avatar').textContent = motorista.avatar;
+    document.getElementById('perfil-avatar').textContent = motorista.avatar;
+    document.getElementById('perfil-nome').textContent = motorista.nome;
+    document.getElementById('perfil-veiculo').textContent = motorista.veiculo + ' - ' + motorista.placa;
+
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+
+    if (!motorista.online) {
+        statusDot.className = 'status-dot offline';
+        statusText.textContent = 'Offline';
+    } else if (motorista.status === 'ocupado') {
+        statusDot.className = 'status-dot ocupado';
+        statusText.textContent = 'Em entrega';
+    } else {
+        statusDot.className = 'status-dot';
+        statusText.textContent = 'Disponivel';
+    }
+}
+
+function atualizarPerfil() {
+    document.getElementById('stat-entregas').textContent = motorista.entregas;
+    document.getElementById('stat-avaliacao').textContent = motorista.avaliacao;
+    document.getElementById('stat-ganhos').textContent = 'R$' + (motorista.ganhos / 1000).toFixed(1) + 'k';
+}
+
+function toggleStatus() {
+    if (motorista.status === 'disponivel') {
+        motorista.status = 'offline';
+        motorista.online = false;
+    } else {
+        motorista.status = 'disponivel';
+        motorista.online = true;
+    }
+    atualizarHeader();
+
+    const toggle = document.getElementById('toggle-online');
+    if (motorista.online) toggle.classList.add('on');
+    else toggle.classList.remove('on');
+}
+
+function toggleOnline() {
+    motorista.online = !motorista.online;
+    if (motorista.online) motorista.status = 'disponivel';
+    else motorista.status = 'offline';
+
+    const toggle = document.getElementById('toggle-online');
+    toggle.classList.toggle('on');
+    atualizarHeader();
+}
+
+// ===================== MODAL =====================
+function mostrarModal(tipo) {
+    const overlay = document.getElementById('modal-overlay');
+    const title = document.getElementById('modal-title');
+    const content = document.getElementById('modal-content');
+
+    const modais = {
+        veiculo: {
+            title: 'Meu Veiculo',
+            html: `
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <input type="text" value="Moto" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Modelo</label>
+                    <input type="text" value="Honda CG 160">
+                </div>
+                <div class="form-group">
+                    <label>Placa</label>
+                    <input type="text" value="ABC-1234">
+                </div>
+                <div class="form-group">
+                    <label>Capacidade (kg)</label>
+                    <input type="number" value="50">
+                </div>
+            `
+        },
+        config: {
+            title: 'Configuracoes',
+            html: `
+                <div class="toggle-row">
+                    <div>
+                        <div style="font-weight: 600;">Notificacoes push</div>
+                        <div style="font-size: 12px; color: var(--gray);">Alertas de novas ofertas</div>
+                    </div>
+                    <div class="toggle-switch on"></div>
+                </div>
+                <div class="toggle-row">
+                    <div>
+                        <div style="font-weight: 600;">Som de alerta</div>
+                        <div style="font-size: 12px; color: var(--gray);">Tocar som ao receber oferta</div>
+                    </div>
+                    <div class="toggle-switch on"></div>
+                </div>
+                <div class="toggle-row">
+                    <div>
+                        <div style="font-weight: 600;">Vibrar</div>
+                        <div style="font-size: 12px; color: var(--gray);">Vibracao em notificacoes</div>
+                    </div>
+                    <div class="toggle-switch"></div>
+                </div>
+                <div class="toggle-row">
+                    <div>
+                        <div style="font-weight: 600;">Modo escuro</div>
+                        <div style="font-size: 12px; color: var(--gray);">Tema atual: Escuro</div>
+                    </div>
+                    <div class="toggle-switch on"></div>
+                </div>
+            `
+        },
+        ajuda: {
+            title: 'Ajuda e Suporte',
+            html: `
+                <div class="menu-item" style="margin-bottom: 8px;">
+                    <svg viewBox="0 0 24 24"><path d="M11 18h2v-3h3v-2h-3v-3h-2v3H8v2h3v3zm1-12c4.97 0 9 4.03 9 9s-4.03 9-9 9-9-4.03-9-9 4.03-9 9-9zm0-2C6.48 4 2 8.48 2 14s4.48 10 10 10 10-4.48 10-10S17.52 4 12 4z"/></svg>
+                    <div class="menu-item-text">
+                        <div class="menu-item-title">Como funciona?</div>
+                    </div>
+                </div>
+                <div class="menu-item" style="margin-bottom: 8px;">
+                    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 12h-2v-2h2v2zm0-4h-2V6h2v4z"/></svg>
+                    <div class="menu-item-text">
+                        <div class="menu-item-title">Reportar problema</div>
+                    </div>
+                </div>
+                <div class="menu-item" style="margin-bottom: 8px;">
+                    <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                    <div class="menu-item-text">
+                        <div class="menu-item-title">Falar com suporte</div>
+                        <div class="menu-item-desc">(47) 99999-9999</div>
+                    </div>
+                </div>
+            `
+        }
+    };
+
+    const m = modais[tipo];
+    title.textContent = m.title;
+    content.innerHTML = m.html;
+    overlay.classList.add('active');
+}
+
+function fecharModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('modal-overlay').classList.remove('active');
+}
+
+// ===================== EMERGENCIA =====================
+function emergencia() {
+    if (confirm('EMERGENCIA! Deseja ligar para o suporte de emergencia?')) {
+        window.location.href = 'tel:190';
+    }
+}
+
+// ===================== INIT =====================
+document.addEventListener('DOMContentLoaded', () => {
+    // Auto-hide splash apos 3s se nao clicar
+    setTimeout(() => {
+        const splash = document.getElementById('splash');
+        if (splash.style.display !== 'none') {
+            entrarApp();
+        }
+    }, 3000);
+});
+</script>
+
+</body>
+</html>

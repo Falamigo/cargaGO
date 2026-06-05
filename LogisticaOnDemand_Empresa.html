@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Logistica On-Demand - Empresa</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #1557b0;
+            --success: #34a853;
+            --danger: #ea4335;
+            --warning: #fbbc04;
+            --info: #00bcd4;
+            --dark: #202124;
+            --gray: #5f6368;
+            --light-gray: #f1f3f4;
+            --white: #ffffff;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--dark);
+            color: var(--white);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #splash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--dark);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 9999; transition: opacity 0.5s;
+        }
+        #splash .logo-box {
+            width: 100px; height: 100px;
+            background: var(--primary);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 20px;
+            animation: pulse 1.5s infinite;
+        }
+        #splash .logo-box svg { width: 60px; height: 60px; fill: white; }
+        #splash h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        #splash p { color: var(--gray); font-size: 14px; }
+        #splash .btn-entrar {
+            margin-top: 30px; padding: 14px 40px;
+            background: var(--primary); color: white;
+            border: none; border-radius: 25px;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        #login-screen {
+            display: none;
+            min-height: 100vh; padding: 40px 20px;
+            flex-direction: column; justify-content: center;
+        }
+        #login-screen .logo-box {
+            width: 80px; height: 80px;
+            background: var(--primary);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 30px;
+        }
+        #login-screen .logo-box svg { width: 48px; height: 48px; fill: white; }
+        #login-screen h2 { text-align: center; font-size: 22px; margin-bottom: 8px; }
+        #login-screen .subtitle { text-align: center; color: var(--gray); font-size: 14px; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 13px; color: var(--gray); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 14px 16px;
+            background: #303134; color: white;
+            border: 1px solid #5f6368; border-radius: 12px;
+            font-size: 16px; outline: none; font-family: inherit;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); }
+        .form-group textarea { min-height: 80px; resize: vertical; }
+        .btn-primary {
+            width: 100%; padding: 16px;
+            background: var(--primary); color: white;
+            border: none; border-radius: 12px;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn-primary:active { background: var(--primary-dark); }
+        .btn-secondary {
+            width: 100%; padding: 14px;
+            background: #3c4043; color: white;
+            border: none; border-radius: 12px;
+            font-size: 15px; font-weight: 600; cursor: pointer;
+            margin-top: 10px;
+        }
+        .link-text {
+            text-align: center; margin-top: 20px;
+            color: var(--primary); font-size: 14px; cursor: pointer;
+        }
+
+        #app { display: none; min-height: 100vh; }
+
+        .app-header {
+            background: var(--dark);
+            padding: 12px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid #3c4043;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .app-header .user-info { display: flex; align-items: center; gap: 10px; }
+        .avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 16px;
+        }
+        .user-name { font-size: 14px; font-weight: 600; }
+        .user-status { font-size: 12px; color: var(--success); }
+        .btn-icon {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: #303134; border: none; color: white;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+
+        .tab-bar {
+            display: flex; background: var(--dark);
+            border-bottom: 1px solid #3c4043;
+            overflow-x: auto; scrollbar-width: none;
+        }
+        .tab-bar::-webkit-scrollbar { display: none; }
+        .tab-btn {
+            flex: 1; min-width: 80px; padding: 12px 8px;
+            background: none; border: none; color: var(--gray);
+            font-size: 12px; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-btn svg { width: 22px; height: 22px; }
+
+        .tab-content { display: none; padding: 16px; padding-bottom: 80px; }
+        .tab-content.active { display: block; }
+
+        .card {
+            background: #303134; border-radius: 16px;
+            padding: 16px; margin-bottom: 12px;
+            border: 1px solid #3c4043;
+        }
+        .card-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .card-title { font-size: 16px; font-weight: 600; }
+        .badge {
+            padding: 4px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+        }
+        .badge-pendente { background: var(--warning); color: #000; }
+        .badge-aceita { background: var(--primary); color: white; }
+        .badge-entregue { background: var(--success); color: white; }
+        .badge-transito { background: var(--info); color: #000; }
+        .badge-cancelada { background: var(--danger); color: white; }
+
+        .info-row {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 8px; font-size: 14px; color: #bdc1c6;
+        }
+        .info-row svg { width: 18px; height: 18px; fill: var(--gray); flex-shrink: 0; }
+        .info-row strong { color: white; }
+
+        .valor-box {
+            background: var(--primary); border-radius: 12px;
+            padding: 12px 16px; margin-top: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .valor-box .label { font-size: 12px; opacity: 0.9; }
+        .valor-box .valor { font-size: 20px; font-weight: 700; }
+
+        .btn-action {
+            width: 100%; padding: 14px;
+            border: none; border-radius: 12px;
+            font-size: 15px; font-weight: 600; cursor: pointer;
+            margin-top: 12px; display: flex; align-items: center;
+            justify-content: center; gap: 8px;
+        }
+        .btn-nova { background: var(--success); color: white; }
+        .btn-detalhes { background: var(--primary); color: white; }
+        .btn-cancelar { background: var(--danger); color: white; }
+        .btn-rastrear { background: var(--info); color: #000; }
+
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 12px; margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #303134; border-radius: 16px;
+            padding: 20px 16px; text-align: center;
+            border: 1px solid #3c4043;
+        }
+        .stat-card .number { font-size: 28px; font-weight: 700; }
+        .stat-card .label { font-size: 12px; color: var(--gray); margin-top: 4px; }
+        .stat-card.primary .number { color: var(--primary); }
+        .stat-card.success .number { color: var(--success); }
+        .stat-card.warning .number { color: var(--warning); }
+        .stat-card.danger .number { color: var(--danger); }
+
+        .form-section {
+            background: #303134; border-radius: 16px;
+            padding: 20px; margin-bottom: 16px;
+            border: 1px solid #3c4043;
+        }
+        .form-section h3 {
+            font-size: 16px; margin-bottom: 16px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .form-row {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .form-row .form-group { margin-bottom: 12px; }
+
+        .empty-state {
+            text-align: center; padding: 60px 20px;
+            color: var(--gray);
+        }
+        .empty-state svg { width: 80px; height: 80px; fill: var(--gray); margin-bottom: 16px; opacity: 0.5; }
+        .empty-state h3 { font-size: 18px; color: white; margin-bottom: 8px; }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 16px; background: #303134;
+            border-radius: 12px; margin-bottom: 8px;
+            cursor: pointer;
+        }
+        .menu-item svg { width: 24px; height: 24px; fill: var(--gray); }
+        .menu-item-text { flex: 1; }
+        .menu-item-title { font-size: 15px; }
+        .menu-item-desc { font-size: 12px; color: var(--gray); margin-top: 2px; }
+
+        .toggle-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px; background: #303134; border-radius: 12px; margin-bottom: 8px;
+        }
+        .toggle-switch {
+            width: 50px; height: 28px; border-radius: 14px;
+            background: var(--gray); position: relative; cursor: pointer;
+            transition: background 0.3s;
+        }
+        .toggle-switch.on { background: var(--success); }
+        .toggle-switch::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: white; transition: left 0.3s;
+        }
+        .toggle-switch.on::after { left: 24px; }
+
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+            z-index: 1000; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: #303134; border-radius: 20px;
+            width: 100%; max-width: 480px; max-height: 85vh;
+            overflow-y: auto; padding: 24px;
+        }
+        .modal-title { font-size: 20px; font-weight: 600; margin-bottom: 16px; }
+
+        @media (min-width: 768px) {
+            body { background: #121212; }
+            #app, #login-screen { max-width: 480px; margin: 0 auto; background: var(--dark); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="splash">
+    <div class="logo-box">
+        <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+    </div>
+    <h1>Logistica On-Demand</h1>
+    <p>Portal da Empresa</p>
+    <button class="btn-entrar" onclick="entrarApp()">ENTRAR</button>
+</div>
+
+<div id="login-screen">
+    <div class="logo-box">
+        <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+    </div>
+    <h2>Portal da Empresa</h2>
+    <p class="subtitle">Gerencie suas entregas em tempo real</p>
+
+    <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="empresa@demo.com" value="empresa@demo.com">
+    </div>
+    <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="login-senha" placeholder="Sua senha" value="123456">
+    </div>
+    <button class="btn-primary" onclick="fazerLogin()">ENTRAR</button>
+    <p class="link-text" onclick="mostrarCadastro()">Criar conta de empresa</p>
+</div>
+
+<div id="app">
+    <div class="app-header">
+        <div class="user-info">
+            <div class="avatar" id="header-avatar">ME</div>
+            <div>
+                <div class="user-name" id="header-nome">Minha Empresa LTDA</div>
+                <div class="user-status" id="header-status">CNPJ: 12.345.678/0001-90</div>
+            </div>
+        </div>
+        <button class="btn-icon" onclick="sairConta()" title="Sair">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        </button>
+    </div>
+
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="mudarAba('dashboard')">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+            Dashboard
+        </button>
+        <button class="tab-btn" onclick="mudarAba('nova')">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Nova Entrega
+        </button>
+        <button class="tab-btn" onclick="mudarAba('entregas')">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+            Entregas
+        </button>
+        <button class="tab-btn" onclick="mudarAba('perfil')">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            Perfil
+        </button>
+    </div>
+
+    <div id="tab-dashboard" class="tab-content active">
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <div class="number" id="dash-total">156</div>
+                <div class="label">Total Entregas</div>
+            </div>
+            <div class="stat-card success">
+                <div class="number" id="dash-hoje">12</div>
+                <div class="label">Hoje</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="number" id="dash-pendentes">5</div>
+                <div class="label">Pendentes</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="number" id="dash-transito">3</div>
+                <div class="label">Em Transito</div>
+            </div>
+        </div>
+
+        <h3 style="margin-bottom: 12px; font-size: 16px;">Entregas Recentes</h3>
+        <div id="dash-recentes"></div>
+
+        <button class="btn-action btn-nova" onclick="mudarAbaDireto('nova')" style="margin-top: 20px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            CRIAR NOVA ENTREGA
+        </button>
+    </div>
+
+    <div id="tab-nova" class="tab-content">
+        <div class="form-section">
+            <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--primary)"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                Destino
+            </h3>
+            <div class="form-group">
+                <label>Endereco completo</label>
+                <textarea id="ne-endereco" placeholder="Rua, numero, complemento, bairro"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Bairro</label>
+                    <input type="text" id="ne-bairro" placeholder="Bairro">
+                </div>
+                <div class="form-group">
+                    <label>Cidade</label>
+                    <input type="text" id="ne-cidade" placeholder="Cidade" value="Sao Paulo">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Estado</label>
+                    <input type="text" id="ne-estado" placeholder="SP" value="SP" maxlength="2">
+                </div>
+                <div class="form-group">
+                    <label>CEP</label>
+                    <input type="text" id="ne-cep" placeholder="00000-000">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--success)"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                Destinatario
+            </h3>
+            <div class="form-group">
+                <label>Nome completo</label>
+                <input type="text" id="ne-destinatario" placeholder="Nome do destinatario">
+            </div>
+            <div class="form-group">
+                <label>Telefone</label>
+                <input type="tel" id="ne-telefone" placeholder="(00) 00000-0000">
+            </div>
+            <div class="form-group">
+                <label>Instrucoes de entrega</label>
+                <textarea id="ne-instrucoes" placeholder="Portaria, andar, referencia..."></textarea>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--warning)"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+                Pacote
+            </h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Peso (kg)</label>
+                    <input type="number" id="ne-peso" placeholder="0.0" step="0.1" value="2.5">
+                </div>
+                <div class="form-group">
+                    <label>Volume (m3)</label>
+                    <input type="number" id="ne-volume" placeholder="0.0" step="0.001" value="0.05">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Altura (cm)</label>
+                    <input type="number" id="ne-altura" placeholder="0" value="30">
+                </div>
+                <div class="form-group">
+                    <label>Largura (cm)</label>
+                    <input type="number" id="ne-largura" placeholder="0" value="20">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Comprimento (cm)</label>
+                <input type="number" id="ne-comprimento" placeholder="0" value="40">
+            </div>
+            <div class="toggle-row" style="margin-top: 12px;">
+                <div>
+                    <div style="font-weight: 600;">Fragil</div>
+                    <div style="font-size: 12px; color: var(--gray);">Item quebravel</div>
+                </div>
+                <div class="toggle-switch" id="toggle-fragil" onclick="this.classList.toggle('on')"></div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--info)"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                Agendamento
+            </h3>
+            <div class="form-group">
+                <label>Tipo</label>
+                <select id="ne-tipo" onchange="toggleAgendamento()">
+                    <option value="imediata">Imediata</option>
+                    <option value="agendada">Agendada</option>
+                    <option value="lote">Lote</option>
+                </select>
+            </div>
+            <div id="campos-agendamento" style="display: none;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data</label>
+                        <input type="date" id="ne-data">
+                    </div>
+                    <div class="form-group">
+                        <label>Horario inicio</label>
+                        <input type="time" id="ne-hora-inicio">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Horario fim</label>
+                    <input type="time" id="ne-hora-fim">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Prioridade (1-10)</label>
+                <input type="range" id="ne-prioridade" min="1" max="10" value="5" style="width: 100%;" oninput="document.getElementById('prio-val').textContent = this.value">
+                <div style="text-align: center; margin-top: 4px; font-size: 14px; color: var(--gray);">Prioridade: <span id="prio-val">5</span></div>
+            </div>
+        </div>
+
+        <div class="card" style="background: var(--primary); border: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 12px; opacity: 0.9;">Valor estimado do frete</div>
+                    <div style="font-size: 24px; font-weight: 700;" id="ne-valor">R$ 32,50</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 12px; opacity: 0.9;">Distancia est.</div>
+                    <div style="font-size: 16px; font-weight: 600;">~12 km</div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-action btn-nova" onclick="criarEntrega()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            PUBLICAR ENTREGA
+        </button>
+        <button class="btn-secondary" onclick="limparFormulario()">Limpar</button>
+    </div>
+
+    <div id="tab-entregas" class="tab-content">
+        <div style="display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto;">
+            <button class="btn-icon" style="border-radius: 20px; padding: 8px 16px; width: auto; font-size: 13px;" onclick="filtrarEntregas('todos')">Todos</button>
+            <button class="btn-icon" style="border-radius: 20px; padding: 8px 16px; width: auto; font-size: 13px;" onclick="filtrarEntregas('pendente')">Pendentes</button>
+            <button class="btn-icon" style="border-radius: 20px; padding: 8px 16px; width: auto; font-size: 13px;" onclick="filtrarEntregas('transito')">Em Transito</button>
+            <button class="btn-icon" style="border-radius: 20px; padding: 8px 16px; width: auto; font-size: 13px;" onclick="filtrarEntregas('entregue')">Entregues</button>
+        </div>
+        <div id="lista-entregas"></div>
+    </div>
+
+    <div id="tab-perfil" class="tab-content">
+        <div style="text-align: center; padding: 20px;">
+            <div class="avatar" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto 12px;">ME</div>
+            <h3>Minha Empresa LTDA</h3>
+            <p style="color: var(--gray); font-size: 14px;">CNPJ: 12.345.678/0001-90</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <div class="number">156</div>
+                <div class="label">Entregas Totais</div>
+            </div>
+            <div class="stat-card success">
+                <div class="number">98%</div>
+                <div class="label">Taxa Sucesso</div>
+            </div>
+        </div>
+
+        <div class="menu-item" onclick="mostrarModal('config-frete')">
+            <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+            <div class="menu-item-text">
+                <div class="menu-item-title">Configuracao de Frete</div>
+                <div class="menu-item-desc">Base km, peso, volume, taxas</div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--gray)"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+        </div>
+
+        <div class="menu-item" onclick="mostrarModal('webhook')">
+            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+            <div class="menu-item-text">
+                <div class="menu-item-title">Webhook / API</div>
+                <div class="menu-item-desc">Integracao com e-commerce</div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--gray)"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+        </div>
+
+        <div class="menu-item" onclick="mostrarModal('endereco')">
+            <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            <div class="menu-item-text">
+                <div class="menu-item-title">Endereco do CD</div>
+                <div class="menu-item-desc">Rua das Flores, 123 - Centro</div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--gray)"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+        </div>
+
+        <div class="menu-item" onclick="mostrarModal('ajuda')">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+            <div class="menu-item-text">
+                <div class="menu-item-title">Ajuda e Suporte</div>
+                <div class="menu-item-desc">FAQ, contato, reportar problema</div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--gray)"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+        </div>
+
+        <button class="btn-action btn-cancelar" onclick="sairConta()" style="margin-top: 20px;">
+            Sair da Conta
+        </button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="fecharModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <h3 class="modal-title" id="modal-title">Titulo</h3>
+        <div id="modal-content"></div>
+        <button class="btn-primary" onclick="fecharModal()" style="margin-top: 16px;">Fechar</button>
+    </div>
+</div>
+
+<script>
+
+const empresa = {
+    nome: "Minha Empresa LTDA",
+    cnpj: "12.345.678/0001-90",
+    email: "empresa@demo.com",
+    avatar: "ME",
+    endereco: "Rua das Flores, 123 - Centro, Sao Paulo - SP",
+    lat: -23.5505,
+    lng: -46.6333,
+    configFrete: {
+        base_km: 2.50,
+        base_peso: 1.00,
+        base_volume: 0.50,
+        minimo: 8.00,
+        taxa_urgencia: 1.30,
+        taxa_agendamento: 0.90
+    }
+};
+
+let entregas = [
+    {
+        id: 1,
+        codigo: "LOG20250604001",
+        codigoPedido: "PED-9981",
+        marketplace: "Mercado Livre",
+        destino: "Av. Brasil, 456 - Jardim America",
+        bairro: "Jardim America",
+        cidade: "Sao Paulo",
+        estado: "SP",
+        cep: "01436-000",
+        destinatario: "Maria Silva",
+        telefone: "(11) 98765-4321",
+        peso: 2.5,
+        volume: 0.05,
+        fragil: false,
+        distancia: 8.5,
+        tempo: 25,
+        valor: 28.50,
+        tipo: "imediata",
+        prioridade: 5,
+        status: "pendente",
+        dataCriacao: "04/06/2025 10:30",
+        motorista: null,
+        dataAceite: null,
+        dataEntrega: null
+    },
+    {
+        id: 2,
+        codigo: "LOG20250604002",
+        codigoPedido: "PED-9982",
+        marketplace: "Shopee",
+        destino: "Rua Oscar Freire, 100 - Jardins",
+        bairro: "Jardins",
+        cidade: "Sao Paulo",
+        estado: "SP",
+        cep: "01426-001",
+        destinatario: "Pedro Costa",
+        telefone: "(11) 91234-5678",
+        peso: 5.0,
+        volume: 0.12,
+        fragil: true,
+        distancia: 12.3,
+        tempo: 35,
+        valor: 42.00,
+        tipo: "imediata",
+        prioridade: 3,
+        status: "aceita",
+        dataCriacao: "04/06/2025 09:15",
+        motorista: "Joao Driver",
+        dataAceite: "04/06/2025 09:22",
+        dataEntrega: null
+    },
+    {
+        id: 3,
+        codigo: "LOG20250604003",
+        codigoPedido: "PED-9983",
+        marketplace: null,
+        destino: "Rua Vergueiro, 3000 - Liberdade",
+        bairro: "Liberdade",
+        cidade: "Sao Paulo",
+        estado: "SP",
+        cep: "01504-001",
+        destinatario: "Ana Paula",
+        telefone: "(11) 99876-5432",
+        peso: 1.2,
+        volume: 0.02,
+        fragil: false,
+        distancia: 5.2,
+        tempo: 18,
+        valor: 18.00,
+        tipo: "agendada",
+        dataAgendada: "2025-06-05",
+        horaInicio: "14:00",
+        horaFim: "16:00",
+        prioridade: 7,
+        status: "pendente",
+        dataCriacao: "04/06/2025 08:00",
+        motorista: null,
+        dataAceite: null,
+        dataEntrega: null
+    },
+    {
+        id: 4,
+        codigo: "LOG20250603045",
+        codigoPedido: "PED-9950",
+        marketplace: "Amazon",
+        destino: "Rua Augusta, 500 - Consolacao",
+        bairro: "Consolacao",
+        cidade: "Sao Paulo",
+        estado: "SP",
+        cep: "01305-000",
+        destinatario: "Carlos Mendes",
+        telefone: "(11) 95555-4444",
+        peso: 3.8,
+        volume: 0.08,
+        fragil: false,
+        distancia: 6.7,
+        tempo: 22,
+        valor: 35.20,
+        tipo: "imediata",
+        prioridade: 5,
+        status: "entregue",
+        dataCriacao: "03/06/2025 14:00",
+        motorista: "Joao Driver",
+        dataAceite: "03/06/2025 14:05",
+        dataEntrega: "03/06/2025 14:45"
+    },
+    {
+        id: 5,
+        codigo: "LOG20250603012",
+        codigoPedido: "PED-9945",
+        marketplace: "Magalu",
+        destino: "Av. Paulista, 2000 - Bela Vista",
+        bairro: "Bela Vista",
+        cidade: "Sao Paulo",
+        estado: "SP",
+        cep: "01310-200",
+        destinatario: "Fernanda Lima",
+        telefone: "(11) 96666-7777",
+        peso: 0.8,
+        volume: 0.01,
+        fragil: true,
+        distancia: 4.1,
+        tempo: 15,
+        valor: 15.80,
+        tipo: "imediata",
+        prioridade: 8,
+        status: "em_transito",
+        dataCriacao: "03/06/2025 11:30",
+        motorista: "Maria Silva",
+        dataAceite: "03/06/2025 11:35",
+        dataEntrega: null
+    }
+];
+
+let filtroAtual = 'todos';
+let proximoId = 6;
+
+function entrarApp() {
+    document.getElementById('splash').style.opacity = '0';
+    setTimeout(() => {
+        document.getElementById('splash').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+    }, 500);
+}
+
+function fazerLogin() {
+    const email = document.getElementById('login-email').value;
+    const senha = document.getElementById('login-senha').value;
+    if (!email || !senha) { alert('Preencha email e senha!'); return; }
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    atualizarDashboard();
+    renderizarRecentes();
+    renderizarEntregas();
+}
+
+function mostrarCadastro() {
+    alert('Cadastro de empresa sera integrado ao backend FastAPI.');
+}
+
+function sairConta() {
+    if (confirm('Deseja realmente sair?')) {
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+    }
+}
+
+function mudarAba(aba) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById('tab-' + aba).classList.add('active');
+    if (aba === 'dashboard') { atualizarDashboard(); renderizarRecentes(); }
+    if (aba === 'entregas') renderizarEntregas();
+}
+
+function mudarAbaDireto(aba) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    const map = { 'dashboard': 0, 'nova': 1, 'entregas': 2, 'perfil': 3 };
+    document.querySelectorAll('.tab-btn')[map[aba]].classList.add('active');
+    document.getElementById('tab-' + aba).classList.add('active');
+}
+
+function atualizarDashboard() {
+    const total = entregas.length;
+    const hoje = entregas.filter(e => e.dataCriacao.startsWith('04/06/2025')).length;
+    const pendentes = entregas.filter(e => e.status === 'pendente' || e.status === 'aceita').length;
+    const transito = entregas.filter(e => e.status === 'em_transito' || e.status === 'em_coleta').length;
+    document.getElementById('dash-total').textContent = total;
+    document.getElementById('dash-hoje').textContent = hoje;
+    document.getElementById('dash-pendentes').textContent = pendentes;
+    document.getElementById('dash-transito').textContent = transito;
+}
+
+function renderizarRecentes() {
+    const recentes = entregas.slice(0, 3);
+    const container = document.getElementById('dash-recentes');
+    container.innerHTML = recentes.map(e => {
+        const statusMap = {
+            pendente: { label: 'Pendente', class: 'badge-pendente' },
+            aceita: { label: 'Aceita', class: 'badge-aceita' },
+            em_coleta: { label: 'Em Coleta', class: 'badge-transito' },
+            em_transito: { label: 'Em Transito', class: 'badge-transito' },
+            entregue: { label: 'Entregue', class: 'badge-entregue' },
+            cancelada: { label: 'Cancelada', class: 'badge-cancelada' }
+        };
+        const s = statusMap[e.status] || statusMap.pendente;
+        return `
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">${e.codigo}</div>
+                    <div style="font-size: 12px; color: var(--gray); margin-top: 2px;">${e.destinatario}</div>
+                </div>
+                <span class="badge ${s.class}">${s.label}</span>
+            </div>
+            <div class="info-row">
+                <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span>${e.destino}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                <span style="font-size: 14px; color: var(--gray);">${e.dataCriacao}</span>
+                <span style="font-size: 16px; font-weight: 700; color: var(--primary);">R$ ${e.valor.toFixed(2)}</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function toggleAgendamento() {
+    const tipo = document.getElementById('ne-tipo').value;
+    document.getElementById('campos-agendamento').style.display = tipo === 'agendada' ? 'block' : 'none';
+    calcularFrete();
+}
+
+function calcularFrete() {
+    const peso = parseFloat(document.getElementById('ne-peso').value) || 0;
+    const volume = parseFloat(document.getElementById('ne-volume').value) || 0;
+    const tipo = document.getElementById('ne-tipo').value;
+    const prioridade = parseInt(document.getElementById('ne-prioridade').value) || 5;
+    const distancia = 12.5;
+    const cfg = empresa.configFrete;
+    let valor = (distancia * cfg.base_km) + (peso * cfg.base_peso) + (volume * cfg.base_volume);
+    if (valor < cfg.minimo) valor = cfg.minimo;
+    if (tipo === 'imediata' && prioridade <= 3) valor *= cfg.taxa_urgencia;
+    else if (tipo === 'agendada') valor *= cfg.taxa_agendamento;
+    document.getElementById('ne-valor').textContent = 'R$ ' + valor.toFixed(2).replace('.', ',');
+}
+
+document.addEventListener('input', function(e) {
+    if (e.target && (e.target.id === 'ne-peso' || e.target.id === 'ne-volume' || e.target.id === 'ne-prioridade')) {
+        calcularFrete();
+    }
+});
+
+function criarEntrega() {
+    const endereco = document.getElementById('ne-endereco').value;
+    const bairro = document.getElementById('ne-bairro').value;
+    const cidade = document.getElementById('ne-cidade').value;
+    const estado = document.getElementById('ne-estado').value;
+    const cep = document.getElementById('ne-cep').value;
+    const destinatario = document.getElementById('ne-destinatario').value;
+    if (!endereco || !bairro || !cidade || !destinatario) {
+        alert('Preencha os campos obrigatorios: endereco, bairro, cidade e destinatario!');
+        return;
+    }
+    const tipo = document.getElementById('ne-tipo').value;
+    const peso = parseFloat(document.getElementById('ne-peso').value) || 2.5;
+    const volume = parseFloat(document.getElementById('ne-volume').value) || 0.05;
+    const prioridade = parseInt(document.getElementById('ne-prioridade').value) || 5;
+    const fragil = document.getElementById('toggle-fragil').classList.contains('on');
+    const distancia = 12.5;
+    const cfg = empresa.configFrete;
+    let valor = (distancia * cfg.base_km) + (peso * cfg.base_peso) + (volume * cfg.base_volume);
+    if (valor < cfg.minimo) valor = cfg.minimo;
+    if (tipo === 'imediata' && prioridade <= 3) valor *= cfg.taxa_urgencia;
+    else if (tipo === 'agendada') valor *= cfg.taxa_agendamento;
+    const agora = new Date();
+    const dataStr = agora.toLocaleDateString('pt-BR') + ' ' + agora.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    const nova = {
+        id: proximoId++,
+        codigo: 'LOG' + agora.getFullYear() + String(agora.getMonth()+1).padStart(2,'0') + String(agora.getDate()).padStart(2,'0') + String(proximoId).padStart(3,'0'),
+        codigoPedido: 'PED-' + Math.floor(1000 + Math.random() * 9000),
+        marketplace: null,
+        destino: endereco + ' - ' + bairro,
+        bairro: bairro,
+        cidade: cidade,
+        estado: estado,
+        cep: cep,
+        destinatario: destinatario,
+        telefone: document.getElementById('ne-telefone').value,
+        peso: peso,
+        volume: volume,
+        fragil: fragil,
+        distancia: distancia,
+        tempo: Math.floor(distancia * 2.5),
+        valor: parseFloat(valor.toFixed(2)),
+        tipo: tipo,
+        prioridade: prioridade,
+        status: 'pendente',
+        dataCriacao: dataStr,
+        motorista: null,
+        dataAceite: null,
+        dataEntrega: null
+    };
+    if (tipo === 'agendada') {
+        nova.dataAgendada = document.getElementById('ne-data').value;
+        nova.horaInicio = document.getElementById('ne-hora-inicio').value;
+        nova.horaFim = document.getElementById('ne-hora-fim').value;
+    }
+    entregas.unshift(nova);
+    alert('Entrega ' + nova.codigo + ' criada com sucesso! Valor: R$ ' + nova.valor.toFixed(2));
+    limparFormulario();
+    mudarAbaDireto('entregas');
+    renderizarEntregas();
+    atualizarDashboard();
+}
+
+function limparFormulario() {
+    document.getElementById('ne-endereco').value = '';
+    document.getElementById('ne-bairro').value = '';
+    document.getElementById('ne-cidade').value = 'Sao Paulo';
+    document.getElementById('ne-estado').value = 'SP';
+    document.getElementById('ne-cep').value = '';
+    document.getElementById('ne-destinatario').value = '';
+    document.getElementById('ne-telefone').value = '';
+    document.getElementById('ne-instrucoes').value = '';
+    document.getElementById('ne-peso').value = '2.5';
+    document.getElementById('ne-volume').value = '0.05';
+    document.getElementById('ne-altura').value = '30';
+    document.getElementById('ne-largura').value = '20';
+    document.getElementById('ne-comprimento').value = '40';
+    document.getElementById('toggle-fragil').classList.remove('on');
+    document.getElementById('ne-tipo').value = 'imediata';
+    document.getElementById('campos-agendamento').style.display = 'none';
+    document.getElementById('ne-prioridade').value = '5';
+    document.getElementById('prio-val').textContent = '5';
+    calcularFrete();
+}
+
+function filtrarEntregas(filtro) {
+    filtroAtual = filtro;
+    renderizarEntregas();
+}
+
+function renderizarEntregas() {
+    const container = document.getElementById('lista-entregas');
+    let lista = entregas;
+    if (filtroAtual !== 'todos') {
+        const map = {
+            'pendente': ['pendente', 'aceita'],
+            'transito': ['em_coleta', 'em_transito'],
+            'entregue': ['entregue']
+        };
+        const permitidos = map[filtroAtual] || [];
+        lista = entregas.filter(e => permitidos.includes(e.status));
+    }
+    if (lista.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+                <h3>Nenhuma entrega encontrada</h3>
+                <p>Crie uma nova entrega para comecar.</p>
+            </div>`;
+        return;
+    }
+    const statusMap = {
+        pendente: { label: 'Pendente', class: 'badge-pendente' },
+        aceita: { label: 'Aceita', class: 'badge-aceita' },
+        em_coleta: { label: 'Em Coleta', class: 'badge-transito' },
+        em_transito: { label: 'Em Transito', class: 'badge-transito' },
+        entregue: { label: 'Entregue', class: 'badge-entregue' },
+        cancelada: { label: 'Cancelada', class: 'badge-cancelada' }
+    };
+    container.innerHTML = lista.map(e => {
+        const s = statusMap[e.status] || statusMap.pendente;
+        const motoristaInfo = e.motorista ? `<div style="font-size: 12px; color: var(--success); margin-top: 4px;">Motorista: ${e.motorista}</div>` : '';
+        const agendamentoInfo = e.tipo === 'agendada' && e.dataAgendada ? `<div style="font-size: 12px; color: var(--info); margin-top: 4px;">Agendada: ${e.dataAgendada} ${e.horaInicio || ''}</div>` : '';
+        return `
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">${e.codigo}</div>
+                    <div style="font-size: 12px; color: var(--gray); margin-top: 2px;">
+                        ${e.codigoPedido} ${e.marketplace ? '| ' + e.marketplace : ''}
+                    </div>
+                </div>
+                <span class="badge ${s.class}">${s.label}</span>
+            </div>
+            <div class="info-row">
+                <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span><strong>Para:</strong> ${e.destino}</span>
+            </div>
+            <div class="info-row">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                <span><strong>Dest:</strong> ${e.destinatario} | ${e.telefone || 'Sem tel'}</span>
+            </div>
+            <div class="info-row">
+                <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+                <span><strong>Peso:</strong> ${e.peso} kg ${e.fragil ? '(Fragil)' : ''} | <strong>Tempo:</strong> ${e.tempo} min</span>
+            </div>
+            ${motoristaInfo}
+            ${agendamentoInfo}
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+                <span style="font-size: 12px; color: var(--gray);">${e.dataCriacao}</span>
+                <span style="font-size: 18px; font-weight: 700; color: var(--primary);">R$ ${e.valor.toFixed(2)}</span>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <button class="btn-action btn-detalhes" style="flex: 1; margin-top: 0;" onclick="mostrarDetalhes(${e.id})">Detalhes</button>
+                ${e.status !== 'entregue' && e.status !== 'cancelada' ? `<button class="btn-action btn-cancelar" style="flex: 1; margin-top: 0;" onclick="cancelarEntrega(${e.id})">Cancelar</button>` : ''}
+                ${e.status === 'em_transito' || e.status === 'em_coleta' ? `<button class="btn-action btn-rastrear" style="flex: 1; margin-top: 0;" onclick="rastrearEntrega(${e.id})">Rastrear</button>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function mostrarDetalhes(id) {
+    const e = entregas.find(x => x.id === id);
+    if (!e) return;
+    const statusMap = {
+        pendente: 'Pendente', aceita: 'Aceita', em_coleta: 'Em Coleta',
+        em_transito: 'Em Transito', entregue: 'Entregue', cancelada: 'Cancelada'
+    };
+    let html = `
+        <div class="form-group">
+            <label>Codigo</label>
+            <input type="text" value="${e.codigo}" readonly>
+        </div>
+        <div class="form-group">
+            <label>Pedido Origem</label>
+            <input type="text" value="${e.codigoPedido}" readonly>
+        </div>
+        <div class="form-group">
+            <label>Status</label>
+            <input type="text" value="${statusMap[e.status] || e.status}" readonly>
+        </div>
+        <div class="form-group">
+            <label>Destino</label>
+            <input type="text" value="${e.destino}" readonly>
+        </div>
+        <div class="form-group">
+            <label>Destinatario</label>
+            <input type="text" value="${e.destinatario}" readonly>
+        </div>
+        <div class="form-group">
+            <label>Telefone</label>
+            <input type="text" value="${e.telefone || 'Nao informado'}" readonly>
+        </div>
+        <div class="form-group">
+            <label>Peso / Volume</label>
+            <input type="text" value="${e.peso} kg / ${e.volume} m3${e.fragil ? ' (Fragil)' : ''}" readonly>
+        </div>
+        <div class="form-group">
+            <label>Distancia / Tempo</label>
+            <input type="text" value="${e.distancia} km / ${e.tempo} min" readonly>
+        </div>
+        <div class="form-group">
+            <label>Valor do Frete</label>
+            <input type="text" value="R$ ${e.valor.toFixed(2)}" readonly style="color: var(--primary); font-weight: 700;">
+        </div>
+        <div class="form-group">
+            <label>Motorista</label>
+            <input type="text" value="${e.motorista || 'Aguardando aceite'}" readonly>
+        </div>
+        <div class="form-group">
+            <label>Data Criacao</label>
+            <input type="text" value="${e.dataCriacao}" readonly>
+        </div>
+        ${e.dataAceite ? `<div class="form-group"><label>Data Aceite</label><input type="text" value="${e.dataAceite}" readonly></div>` : ''}
+        ${e.dataEntrega ? `<div class="form-group"><label>Data Entrega</label><input type="text" value="${e.dataEntrega}" readonly></div>` : ''}
+    `;
+    document.getElementById('modal-title').textContent = 'Detalhes da Entrega';
+    document.getElementById('modal-content').innerHTML = html;
+    document.getElementById('modal-overlay').classList.add('active');
+}
+
+function cancelarEntrega(id) {
+    if (!confirm('Tem certeza que deseja cancelar esta entrega?')) return;
+    const e = entregas.find(x => x.id === id);
+    if (e) {
+        e.status = 'cancelada';
+        renderizarEntregas();
+        atualizarDashboard();
+        alert('Entrega ' + e.codigo + ' cancelada.');
+    }
+}
+
+function rastrearEntrega(id) {
+    const e = entregas.find(x => x.id === id);
+    if (!e) return;
+    let html = `
+        <div style="text-align: center; padding: 20px;">
+            <div style="font-size: 48px; margin-bottom: 16px;">📍</div>
+            <h4 style="margin-bottom: 8px;">Rastreamento em tempo real</h4>
+            <p style="color: var(--gray); font-size: 14px; margin-bottom: 20px;">
+                Entrega: ${e.codigo}<br>
+                Motorista: ${e.motorista || 'Nao atribuido'}<br>
+                Status: ${e.status}
+            </p>
+            <div style="background: #1a1a2e; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+                <div style="font-size: 14px; color: var(--gray); margin-bottom: 8px;">Ultima localizacao</div>
+                <div style="font-size: 18px; font-weight: 700;">Av. Paulista, 1000</div>
+                <div style="font-size: 12px; color: var(--gray); margin-top: 4px;">Atualizado ha 2 minutos</div>
+            </div>
+            <button class="btn-action btn-detalhes" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.destino)}', '_blank')">
+                Abrir no Google Maps
+            </button>
+        </div>
+    `;
+    document.getElementById('modal-title').textContent = 'Rastreamento';
+    document.getElementById('modal-content').innerHTML = html;
+    document.getElementById('modal-overlay').classList.add('active');
+}
+
+function mostrarModal(tipo) {
+    const overlay = document.getElementById('modal-overlay');
+    const title = document.getElementById('modal-title');
+    const content = document.getElementById('modal-content');
+    const modais = {
+        'config-frete': {
+            title: 'Configuracao de Frete',
+            html: `
+                <div class="form-group"><label>Base por km (R$)</label><input type="number" id="cfg-km" value="${empresa.configFrete.base_km}" step="0.01"></div>
+                <div class="form-group"><label>Base por kg (R$)</label><input type="number" id="cfg-peso" value="${empresa.configFrete.base_peso}" step="0.01"></div>
+                <div class="form-group"><label>Base por m3 (R$)</label><input type="number" id="cfg-volume" value="${empresa.configFrete.base_volume}" step="0.01"></div>
+                <div class="form-group"><label>Frete minimo (R$)</label><input type="number" id="cfg-minimo" value="${empresa.configFrete.minimo}" step="0.01"></div>
+                <div class="form-group"><label>Taxa urgencia</label><input type="number" id="cfg-urgencia" value="${empresa.configFrete.taxa_urgencia}" step="0.01"></div>
+                <div class="form-group"><label>Taxa agendamento</label><input type="number" id="cfg-agendamento" value="${empresa.configFrete.taxa_agendamento}" step="0.01"></div>
+                <button class="btn-action btn-nova" onclick="salvarConfigFrete()">SALVAR CONFIGURACOES</button>
+            `
+        },
+        'webhook': {
+            title: 'Webhook / API',
+            html: `
+                <div class="form-group"><label>URL do Webhook</label><input type="text" value="https://sua-loja.com/webhook/logistica" placeholder="https://..."></div>
+                <div class="form-group"><label>API Key</label><input type="text" value="sk_live_xxxxxxxxxxxxxxxx" readonly style="font-family: monospace;"></div>
+                <div class="form-group"><label>Secret</label><input type="text" value="whsec_xxxxxxxxxxxxxxxx" readonly style="font-family: monospace;"></div>
+                <div style="background: #1a1a2e; border-radius: 12px; padding: 16px; margin-top: 12px;">
+                    <div style="font-size: 13px; color: var(--gray); margin-bottom: 8px;">Eventos disponiveis:</div>
+                    <div style="font-size: 12px; color: #bdc1c6; line-height: 1.8;">
+                        entrega.criada<br>entrega.aceita<br>entrega.coletada<br>entrega.entregue<br>entrega.cancelada
+                    </div>
+                </div>
+                <button class="btn-action btn-detalhes" onclick="alert('API Key copiada!')">COPIAR API KEY</button>
+            `
+        },
+        'endereco': {
+            title: 'Endereco do Centro de Distribuicao',
+            html: `
+                <div class="form-group"><label>Endereco</label><input type="text" value="Rua das Flores, 123" id="ed-endereco"></div>
+                <div class="form-group"><label>Bairro</label><input type="text" value="Centro" id="ed-bairro"></div>
+                <div class="form-group"><label>Cidade</label><input type="text" value="Sao Paulo" id="ed-cidade"></div>
+                <div class="form-group"><label>Estado</label><input type="text" value="SP" id="ed-estado" maxlength="2"></div>
+                <div class="form-group"><label>CEP</label><input type="text" value="01001-000" id="ed-cep"></div>
+                <div class="form-group"><label>Latitude</label><input type="text" value="-23.5505" id="ed-lat"></div>
+                <div class="form-group"><label>Longitude</label><input type="text" value="-46.6333" id="ed-lng"></div>
+                <button class="btn-action btn-nova" onclick="salvarEndereco()">SALVAR ENDERECO</button>
+            `
+        },
+        'ajuda': {
+            title: 'Ajuda e Suporte',
+            html: `
+                <div class="menu-item" style="margin-bottom: 8px;">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="var(--gray)"><path d="M11 18h2v-3h3v-2h-3v-3h-2v3H8v2h3v3zm1-12c4.97 0 9 4.03 9 9s-4.03 9-9 9-9-4.03-9-9 4.03-9 9-9zm0-2C6.48 4 2 8.48 2 14s4.48 10 10 10 10-4.48 10-10S17.52 4 12 4z"/></svg>
+                    <div class="menu-item-text"><div class="menu-item-title">Como funciona?</div></div>
+                </div>
+                <div class="menu-item" style="margin-bottom: 8px;">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="var(--gray)"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 12h-2v-2h2v2zm0-4h-2V6h2v4z"/></svg>
+                    <div class="menu-item-text"><div class="menu-item-title">Reportar problema</div></div>
+                </div>
+                <div class="menu-item" style="margin-bottom: 8px;">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="var(--gray)"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                    <div class="menu-item-text">
+                        <div class="menu-item-title">Falar com suporte</div>
+                        <div class="menu-item-desc">(47) 99999-9999</div>
+                    </div>
+                </div>
+            `
+        }
+    };
+    const m = modais[tipo];
+    if (m) {
+        title.textContent = m.title;
+        content.innerHTML = m.html;
+        overlay.classList.add('active');
+    }
+}
+
+function salvarConfigFrete() {
+    empresa.configFrete.base_km = parseFloat(document.getElementById('cfg-km').value) || 2.5;
+    empresa.configFrete.base_peso = parseFloat(document.getElementById('cfg-peso').value) || 1.0;
+    empresa.configFrete.base_volume = parseFloat(document.getElementById('cfg-volume').value) || 0.5;
+    empresa.configFrete.minimo = parseFloat(document.getElementById('cfg-minimo').value) || 8.0;
+    empresa.configFrete.taxa_urgencia = parseFloat(document.getElementById('cfg-urgencia').value) || 1.3;
+    empresa.configFrete.taxa_agendamento = parseFloat(document.getElementById('cfg-agendamento').value) || 0.9;
+    alert('Configuracoes de frete salvas!');
+    fecharModal();
+}
+
+function salvarEndereco() {
+    empresa.endereco = document.getElementById('ed-endereco').value + ', ' + document.getElementById('ed-bairro').value;
+    alert('Endereco atualizado!');
+    fecharModal();
+}
+
+function fecharModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('modal-overlay').classList.remove('active');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        const splash = document.getElementById('splash');
+        if (splash.style.display !== 'none') entrarApp();
+    }, 3000);
+});
+</script>
+
+</body>
+</html>
